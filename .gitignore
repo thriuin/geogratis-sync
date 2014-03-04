@@ -1,0 +1,12 @@
+geogratis-sync.egg-info
+.idea
+*.pyc
+.project
+.pydevproject
+build
+dist
+*.swp
+*.ini
+.DS_Store
+*.prefs
+geoenv
