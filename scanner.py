@@ -23,10 +23,12 @@ def get_geogratis_rec(uuid, lang='en', data_format='json'):
     return geo_result
 
 
-def read_geogratis(since=''):
+def read_geogratis(since='', start_index=''):
     geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?alt=json'
     if since != '':
-        geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min=%s&alt=json'.format(since)
+        geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min={0}&alt=json'.format(since)
+    elif start_index != '':
+        geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?start-index={0}&alt=json'.format(start_index)
     r = requests.get(geog_url)
     session = None
     try:
@@ -61,7 +63,7 @@ def read_geogratis(since=''):
                 except Exception, e:
                     logging.error('{0} failed to load'.format(product['id']))
                     logging.error(e)
-                
+
     except Exception, e:
         logging.error(e)
     finally:
@@ -86,24 +88,32 @@ def save_geogratis_record(session, uuid):
             title_fr = geo_rec_fr['title']
         new_rec = find_geogratis_record(session, geo_rec_en['id'])
 
+        created_date = ''
+        updated_date = ''
+        edited_date = ''
+        if state != 'deleted':
+            created_date = geo_rec_en['createdDate']
+            updated_date = geo_rec_en['updatedDate']
+            edited_date = geo_rec_en['editedDate']
+
         if new_rec is None:
             new_rec = GeogratisRecord(uuid=geo_rec_en['id'],
                                       title_en=geo_rec_en['title'],
                                       title_fr=title_fr,
                                       json_record_en=json.dumps(geo_rec_en),
                                       json_record_fr=json.dumps(geo_rec_fr),
-                                      created=geo_rec_en['createdDate'],
-                                      updated=geo_rec_en['updatedDate'],
-                                      edited=geo_rec_en['editedDate'],
+                                      created=created_date,
+                                      updated=updated_date,
+                                      edited=edited_date,
                                       state=state)
         else:
             new_rec.title_en = geo_rec_en['title']
             new_rec.title_fr = title_fr
             new_rec.json_record_en = json.dumps(geo_rec_en)
             new_rec.json_record_fr = json.dumps(geo_rec_fr),
-            new_rec.created = geo_rec_en['createdDate'],
-            new_rec.updated = geo_rec_en['updatedDate'],
-            new_rec.edited = geo_rec_en['editedDate'],
+            new_rec.created = created_date,
+            new_rec.updated = updated_date,
+            new_rec.edited = edited_date,
             new_rec.state = state
 
         add_geogratis_record(session, new_rec)
@@ -111,9 +121,12 @@ def save_geogratis_record(session, uuid):
 argparser = argparse.ArgumentParser(
     description='Scan Geogratis and save record to a database'
 )
-argparser.add_argument('-l', '--log', action='store', default='', dest='log_filename', help='Log to file')
 argparser.add_argument('-d', '--since', action='store', default='', dest='since',
                        help='Scan since date (e.g. 2014-01-21)')
+argparser.add_argument('-l', '--log', action='store', default='', dest='log_filename', help='Log to file')
+argparser.add_argument('-s', '--start_index', action='store', default='', dest='start_index',
+                       help='Start-index')
+
 args = argparser.parse_args()
 
 if args.log_filename != '':
@@ -122,7 +135,10 @@ if args.log_filename != '':
                         datefmt='%m/%d/%Y %I:%M:%S %p')
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                         datefmt='%m/%d/%Y %I:%M:%S %p')
+print args.start_index
 if args.since != '':
-    read_geogratis(args.since)
+    read_geogratis(since=args.since)
+elif args.start_index != '':
+    read_geogratis(start_index=args.start_index)
 else:
     read_geogratis()
