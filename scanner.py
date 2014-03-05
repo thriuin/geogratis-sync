@@ -54,7 +54,14 @@ def read_geogratis(since=''):
                     logging.warn(next_link)
                     break
             for product in feed_page['products']:
-                save_geogratis_record(session, product['id'])
+
+                # Don't crash on every call - log the error and continue
+                try:
+                    save_geogratis_record(session, product['id'])
+                except Exception, e:
+                    logging.error('{0} failed to load'.format(product['id']))
+                    logging.error(e)
+                
     except Exception, e:
         logging.error(e)
     finally:
