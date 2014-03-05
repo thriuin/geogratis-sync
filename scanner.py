@@ -2,22 +2,26 @@ __author__ = 'Statistics Canada'
 __copyright__ = 'Crown Copyright'
 __license__ = 'MIT'
 
+import argparse
+import logging
 import requests
 import simplejson as json
 from db_schema import connect_to_database, GeogratisRecord, add_geogratis_record, find_geogratis_record
 from time import sleep
 
-def get_geogratis_rec(id, lang='en', data_format='json'):
+
+def get_geogratis_rec(uuid, lang='en', data_format='json'):
     geog_url = 'http://geogratis.gc.ca/api/{0}/nrcan-rncan/ess-sst/{1}.{2}'.format(
-        lang, id, data_format)
+        lang, uuid, data_format)
     r = requests.get(geog_url)
     if r.status_code == 200 and data_format == 'json':
         geo_result = r.json()
     else:
-        print r.status_code
+        logging.error('HTTP Error: {0}'.format(r.status_code))
         geo_result = None
-    sleep(1)
+    sleep(0.5)
     return geo_result
+
 
 def read_geogratis(since=''):
     geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?alt=json'
@@ -34,7 +38,7 @@ def read_geogratis(since=''):
             for link in feed_page['links']:
                 if link['rel'] == 'next':
                     next_link = link['href']
-                    print next_link
+                    logging.warn(next_link)
                     break
             for product in feed_page['products']:
                 save_geogratis_record(session, product['id'])
@@ -47,19 +51,21 @@ def read_geogratis(since=''):
             for link in feed_page['links']:
                 if link['rel'] == 'next':
                     next_link = link['href']
-                    print next_link
+                    logging.warn(next_link)
                     break
             for product in feed_page['products']:
                 save_geogratis_record(session, product['id'])
     except Exception, e:
-        print e
+        logging.error(e)
     finally:
         if not session is None:
             session.close_all()
 
 
 def save_geogratis_record(session, uuid):
-    print 'Retrieving data set {0}\n'.format(uuid)
+    msg = 'Retrieving data set {0}'.format(uuid)
+    logging.info(msg)
+    print(msg)
     geo_rec_en = get_geogratis_rec(uuid)
     geo_rec_fr = get_geogratis_rec(uuid, 'fr')
     if not geo_rec_en is None:
@@ -95,9 +101,21 @@ def save_geogratis_record(session, uuid):
 
         add_geogratis_record(session, new_rec)
 
+argparser = argparse.ArgumentParser(
+    description='Scan Geogratis and save record to a database'
+)
+argparser.add_argument('-l', '--log', action='store', default='', dest='log_filename', help='Log to file')
+argparser.add_argument('-d', '--since', action='store', default='', dest='since',
+                       help='Scan since date (e.g. 2014-01-21)')
+args = argparser.parse_args()
 
-#print get_geogratis_rec('de667706-f3be-5fa8-b805-4c0908d7ca3f')
-read_geogratis()
-
-
-
+if args.log_filename != '':
+    logging.basicConfig(filename=args.log_filename, level=logging.WARNING,
+                        format='%(asctime)s %(levelname)s: %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p')
+if args.since != '':
+    read_geogratis(args.since)
+else:
+    read_geogratis()
