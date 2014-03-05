@@ -4,7 +4,8 @@ __license__ = 'MIT'
 
 import requests
 import simplejson as json
-from db_schema import connect_to_database, GeogratisRecord, add_geogratis_record, find_geogratis_record, Db_Session
+from db_schema import connect_to_database, GeogratisRecord, add_geogratis_record, find_geogratis_record
+from time import sleep
 
 def get_geogratis_rec(id, lang='en', data_format='json'):
     geog_url = 'http://geogratis.gc.ca/api/{0}/nrcan-rncan/ess-sst/{1}.{2}'.format(
@@ -15,6 +16,7 @@ def get_geogratis_rec(id, lang='en', data_format='json'):
     else:
         print r.status_code
         geo_result = None
+    sleep(1)
     return geo_result
 
 def read_geogratis(since=''):
@@ -57,6 +59,7 @@ def read_geogratis(since=''):
 
 
 def save_geogratis_record(session, uuid):
+    print 'Retrieving data set {0}\n'.format(uuid)
     geo_rec_en = get_geogratis_rec(uuid)
     geo_rec_fr = get_geogratis_rec(uuid, 'fr')
     if not geo_rec_en is None:
