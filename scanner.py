@@ -88,9 +88,9 @@ def save_geogratis_record(session, uuid):
             title_fr = geo_rec_fr['title']
         new_rec = find_geogratis_record(session, geo_rec_en['id'])
 
-        created_date = ''
-        updated_date = ''
-        edited_date = ''
+        created_date = '2000-01-01'
+        updated_date = '2000-01-01'
+        edited_date = '2000-01-01'
         if state != 'deleted':
             created_date = geo_rec_en['createdDate']
             updated_date = geo_rec_en['updatedDate']
