@@ -1,5 +1,6 @@
 __author__ = 'thomros'
 
+import logging
 from ConfigParser import ConfigParser
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
@@ -24,6 +25,8 @@ class GeogratisRecord(g_base):
     state = Column(UnicodeText)
     json_record_en = Column(UnicodeText)
     json_record_fr = Column(UnicodeText)
+    od_updated = Column(Date, nullable=True)
+    od_status = Column(UnicodeText)
 
     def __repr__(self):
         return "<GeogratisRecord(id='%s'), title_en='%s', edited='%s'>" % (
@@ -58,5 +61,15 @@ def find_geogratis_record(session, uuid):
         # This is perfectly legit
         rec = None
     except MultipleResultsFound, e:
-        print e
+        logging.error(e)
     return rec
+
+
+def find_all_geogratis_records(session):
+
+    records = None
+    try:
+        records = session.query(GeogratisRecord)
+    except Exception, e:
+        logging.error(e)
+    return records
