@@ -19,12 +19,12 @@ Use the following SQL script to create the table that holds the results of the G
         state TEXT,
         json_record_en TEXT,
         json_record_fr TEXT,
-        od_updated TIMESTAMP WITHOUT TIME ZONE
+        geogratis_scanned TIMESTAMP WITHOUT TIME ZONE,
+        last_comparison TIMESTAMP WITHOUT TIME ZONE,
+        od_updated TIMESTAMP WITHOUT TIME ZONE,
+        od_status TEXT
     );
 
-
-*temp* alter table geogratis_records add column od_updated timestamp without time zone,
-                                     add column od_status TEXT;
 
 Open Data Meta Data Model
 -------------------------

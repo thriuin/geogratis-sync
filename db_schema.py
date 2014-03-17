@@ -27,6 +27,8 @@ class GeogratisRecord(g_base):
     json_record_fr = Column(UnicodeText)
     od_updated = Column(Date, nullable=True)
     od_status = Column(UnicodeText)
+    geogratis_scanned = Column(Date, nullable=True)
+    last_comparison = Column(Date, nullable=True)
 
     def __repr__(self):
         return "<GeogratisRecord(id='%s'), title_en='%s', edited='%s'>" % (

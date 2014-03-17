@@ -6,6 +6,7 @@ import argparse
 import logging
 import requests
 import simplejson as json
+from datetime import datetime
 from db_schema import connect_to_database, GeogratisRecord, add_geogratis_record, find_geogratis_record
 from time import sleep
 
@@ -91,6 +92,8 @@ def save_geogratis_record(session, uuid):
         created_date = '2000-01-01'
         updated_date = '2000-01-01'
         edited_date = '2000-01-01'
+        geogratis_scanned = datetime.now().isoformat()
+        print geogratis_scanned
         if state != 'deleted':
             created_date = geo_rec_en['createdDate']
             updated_date = geo_rec_en['updatedDate']
@@ -105,7 +108,8 @@ def save_geogratis_record(session, uuid):
                                       created=created_date,
                                       updated=updated_date,
                                       edited=edited_date,
-                                      state=state)
+                                      state=state,
+                                      geogratis_scanned=geogratis_scanned)
         else:
             new_rec.title_en = geo_rec_en['title']
             new_rec.title_fr = title_fr
@@ -115,6 +119,7 @@ def save_geogratis_record(session, uuid):
             new_rec.updated = updated_date,
             new_rec.edited = edited_date,
             new_rec.state = state
+            new_rec.geogratis_scanned = geogratis_scanned
 
         add_geogratis_record(session, new_rec)
 

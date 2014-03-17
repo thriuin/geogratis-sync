@@ -136,24 +136,24 @@ class MetadataDatasetModel():
         if self.state != other.state:
             diff_list.append(u"State: \tSource [{0}], \tOther [{1}]".format(self.state, other.state))
             
-        if len(self.keywords) == len(other.keywords):
+        if len(self.keywords) != len(other.keywords):
             diff_list.append(u"Keywords: \tCount {0}, \tCount Other {1}".format(len(self.keywords),
                                                                                           len(other.keywords)))
-        if len(self.keywords_fra) == len(other.keywords_fra):
-            diff_list.append(u"Keywords (FR): \tCount {0}, \tCount Other {1}".format(len(self.keywords),
-                                                                                          len(other.keywords)))
-        if len(self.geographic_region) == len(other.geographic_region):
-            diff_list.append(u"Regions: \tCount {0}, \tCount Other {1}".format(len(self.keywords),
-                                                                                          len(other.keywords)))
-        if len(self.topic_category) == len(other.topic_category):
-            diff_list.append(u"Topics: \tCount {0}, \tCount Other {1}".format(len(self.keywords),
-                                                                                          len(other.keywords)))
-        if len(self.subject) == len(other.subject):
-            diff_list.append(u"Subjects: \tCount {0}, \tCount Other {1}".format(len(self.keywords),
-                                                                                          len(other.keywords)))
-        if len(self.resources) == len(other.resources):
-            diff_list.append(u"Resources: \tCount {0}, \tCount Other {1}".format(len(self.keywords),
-                                                                                          len(other.keywords)))
+        if len(self.keywords_fra) != len(other.keywords_fra):
+            diff_list.append(u"Keywords (FR): \tCount {0}, \tCount Other {1}".format(len(self.keywords_fra),
+                                                                                          len(other.keywords_fra)))
+        if len(self.geographic_region) != len(other.geographic_region):
+            diff_list.append(u"Regions: \tCount {0}, \tCount Other {1}".format(len(self.geographic_region),
+                                                                                          len(other.geographic_region)))
+        if len(self.topic_category) != len(other.topic_category):
+            diff_list.append(u"Topics: \tCount {0}, \tCount Other {1}".format(len(self.topic_category),
+                                                                                          len(other.topic_category)))
+        if len(self.subject) != len(other.subject):
+            diff_list.append(u"Subjects: \tCount {0}, \tCount Other {1}".format(len(self.subject),
+                                                                                          len(other.subject)))
+        if len(self.resources) != len(other.resources):
+            diff_list.append(u"Resources: \tCount {0}, \tCount Other {1}".format(len(self.resources),
+                                                                                          len(other.resources)))
         return diff_list
 
 
