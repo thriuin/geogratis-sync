@@ -22,7 +22,9 @@ Use the following SQL script to create the table that holds the results of the G
         geogratis_scanned TIMESTAMP WITHOUT TIME ZONE,
         last_comparison TIMESTAMP WITHOUT TIME ZONE,
         od_updated TIMESTAMP WITHOUT TIME ZONE,
-        od_status TEXT
+        od_status TEXT,
+        differences TEXT,
+        ckan_json TEXT
     );
 
 

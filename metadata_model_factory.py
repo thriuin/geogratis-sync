@@ -17,6 +17,7 @@ class MetadataDatasetModelGeogratisFactory():
     od_regions = {}
     od_topics = {}
     od_topic_subjects = {}
+    od_subjects = {}
     od_resource_formats = {}
     od_presentation_forms = {}
 
@@ -48,6 +49,8 @@ class MetadataDatasetModelGeogratisFactory():
             for s in t['subject_ids']:
                 self.od_topic_subjects[t['eng']].append(s)
 
+        for f in dataset_field_by_id['subject']['choices']:
+            self.od_subjects[f['id']] = f['key']
         for r in resource_field_by_id['format']['choices']:
             self.od_resource_formats[r['eng']] = r['key']
         # Additional mappings to the correct types are added because the file formats in Geogratis
@@ -90,11 +93,15 @@ class MetadataDatasetModelGeogratisFactory():
 
     def create_model_geogratis(self, uuid):
         session = connect_to_database()
-        geogratis_rec = find_geogratis_record(session, uuid)
-        geo_rec_en = json.loads(geogratis_rec.json_record_en)
-        geo_rec_fr = json.loads(geogratis_rec.json_record_fr)
+        try:
+            geogratis_rec = find_geogratis_record(session, uuid)
+            geo_rec_en = json.loads(geogratis_rec.json_record_en)
+            geo_rec_fr = json.loads(geogratis_rec.json_record_fr)
+        finally:
+            session.close()
 
         # Even if the French or English record is missing, create an object with
+
         return self.convert_geogratis_json(geo_rec_en, geo_rec_fr)
 
 
@@ -108,7 +115,8 @@ class MetadataDatasetModelGeogratisFactory():
             ds.title = geo_obj_en['title']
             ds.notes = geo_obj_en['summary']
             ds.date_modified = geo_obj_en.get('updatedDate', '2000-01-01')
-            ds.data_series_name = geo_obj_en['citation']['series']
+            if 'citation' in geo_obj_en:
+                ds.data_series_name = geo_obj_en['citation']['series']
 
             # Keywords are extracted from two sources in the Geogratis record: the gc:subject category
             # and the keywords list
@@ -121,7 +129,7 @@ class MetadataDatasetModelGeogratisFactory():
             # CKAN needs to treat the GeoJSON as a string to store, not as actual JSON
             ds.spatial = unicode(str(geo_obj_en['geometry']).replace("u'", '\"').replace("'", '\"'))
 
-            if 'presentationForm' in geo_obj_en['citation']:
+            if ('citation' in geo_obj_en) and ('presentationForm' in geo_obj_en['citation']):
                 for form in geo_obj_en['citation']['presentationForm'].split():
                     if form.strip(';') in self.od_presentation_forms:
                         ds.presentation_form = self.od_presentation_forms[form.strip(';')]
@@ -130,7 +138,7 @@ class MetadataDatasetModelGeogratisFactory():
                 ds.browse_graphic_url = geo_obj_en['browseImages'][0]['link']
             else:
                 ds.browse_graphic_url = "/static/img/canada_default.png"
-            if 'otherCitationDetails' in geo_obj_en['citation']:
+            if ('citation' in geo_obj_en) and ('otherCitationDetails' in geo_obj_en['citation']):
                 ds.digital_object_identifier = geo_obj_en['citation']['otherCitationDetails']
 
             # Must match Geogratis place names against those used by Open Data
@@ -139,7 +147,7 @@ class MetadataDatasetModelGeogratisFactory():
                 if term['label'] in self.od_regions:
                     ds.geographic_region.append(self.od_regions[term['label']])
 
-            if 'seriesIssue' in geo_obj_en['citation']:
+            if ('citation' in geo_obj_en) and ('seriesIssue' in geo_obj_en['citation']):
                 ds.data_series_issue_identification = geo_obj_en['citation']['seriesIssue']
 
             if 'topicCategories' in geo_obj_en:
@@ -163,7 +171,8 @@ class MetadataDatasetModelGeogratisFactory():
                         ds.topic_category.append(topic_key)
                         for s in self.od_topic_subjects[topic_key]:
                             if not s in ds.subject:
-                                ds.subject.append(s)
+                                ds.subject.append(self.od_subjects[s])
+                        ds.subject.sort()
 
             if geo_obj_en['deleted'] == 'false':
                 ds.state = 'active'
@@ -182,6 +191,7 @@ class MetadataDatasetModelGeogratisFactory():
                         new_res.format = 'other'
                     ds.resources.append(new_res)
 
+
         # If the English record does not exist, then don't even bother. BOTH records must exist.
         else:
             ds.state = 'missing'
@@ -193,7 +203,8 @@ class MetadataDatasetModelGeogratisFactory():
             ds.url_fra = 'http://data.gc.ca/data/fr/dataset/{0}'.format(geo_obj_fr['id'])
             ds.title_fra = geo_obj_fr['title']
             ds.notes_fra = geo_obj_fr['summary']
-            ds.data_series_name_fra = geo_obj_fr['citation']['series']
+            if 'citation' in geo_obj_fr:
+                ds.data_series_name_fra = geo_obj_fr['citation']['series']
 
             # Keywords are extracted from two sources in the Geogratis record: the gc:subject category
             # and the keywords list
@@ -201,17 +212,17 @@ class MetadataDatasetModelGeogratisFactory():
             fr_subjects = self._get_category(geo_obj_fr['categories'], 'urn:gc:subject')
             for term in fr_subjects:
                 fr_keywords.append(self._clean_keyword(term['label']))
-            ds.keywords_fra = self._extract_keywords(geo_obj_en.get('keywords', []), fr_keywords)
+            ds.keywords_fra = self._extract_keywords(geo_obj_fr.get('keywords', []), fr_keywords)
 
-            if 'seriesIssue' in geo_obj_fr['citation']:
+            if ('citation' in geo_obj_fr) and ('seriesIssue' in geo_obj_fr['citation']):
                 ds.data_series_issue_identification_fra = geo_obj_fr['citation']['seriesIssue']
             if 'files' in geo_obj_fr:
                 if len(geo_obj_fr['files']) == len(ds.resources):
                     i = 0
                     for res in geo_obj_fr['files']:
                         ds.resources[i].name_fra = res['description']
-                        i += 0
-
+                        i += 1
+        ds.resources.sort(key=lambda r: r.url)
         return ds
 
 
@@ -238,6 +249,7 @@ class MetadataDatasetModelGeogratisFactory():
                 last_word = words.pop()
                 last_word = self._clean_keyword(last_word)
                 base_keywords.append(last_word.strip())
+        base_keywords = list(set(base_keywords))
         base_keywords.sort()
         return base_keywords
 
@@ -247,23 +259,27 @@ class MetadataDatasetModelGeogratisFactory():
         keyword = keyword.strip().replace("/", " - ")
         keyword = keyword.replace("(", "- ").replace(")", "") # change "one (two)" to "one - two"
         keyword = keyword.replace("[", "- ").replace("]", "") # change "one [two]" to "one - two"
-        keyword = keyword.lower()
+        keyword = keyword.lower().strip()
         return keyword
 
     def _convert_size(self, filesize):
         """Take a Geogratis file size string (e.g. 1.25 MB) and convert into a number of bytes in base 10"""
-        parts = filesize.split()
-        num = float(parts[0])
-        if parts[1] == 'KB':
-            num *= 1024
-        elif parts[1] == 'MB':
-            num *= 1048576
-        elif parts[1] == 'GB':
-            num *= 1073741824
-        else:
-            num = 0
-        return int(round(num, -1))
-
+        byte_size = 0
+        try:
+            parts = filesize.split()
+            num = float(parts[0])
+            if parts[1] == 'KB':
+                num *= 1024
+            elif parts[1] == 'MB':
+                num *= 1048576
+            elif parts[1] == 'GB':
+                num *= 1073741824
+            else:
+                num = 0
+            byte_size = int(round(num, -1))
+        except ValueError:
+            return 0
+        return byte_size
 
     def create_model_ckan(self, uuid):
         """
@@ -279,9 +295,14 @@ class MetadataDatasetModelGeogratisFactory():
         package = None
         try:
             package = ckansite.action.package_show(id=uuid)
+        except ckanapi.NotFound, n:
+            logging.warning('Dataset %s not found on CKAN site', uuid)
         except Exception, e:
             logging.error(e)
-        return self.convert_ckan_json(package)
+        if not package is None:
+            return self.convert_ckan_json(package)
+        else:
+            return None
 
 
     def convert_ckan_json(self, ckan_obj):
@@ -298,9 +319,11 @@ class MetadataDatasetModelGeogratisFactory():
         ds.date_modified = ckan_obj['date_modified'][0:10] # only using the date portion
         ds.data_series_name = ckan_obj['data_series_name']
         ds.data_series_name_fra = ckan_obj['data_series_name_fra']
-        ds.keywords = [k.lower() for k in ckan_obj['keywords'].split(',')]
+        ds.keywords = [k.lower().strip() for k in ckan_obj['keywords'].split(',')]
+        ds.keywords = list(set(ds.keywords))
         ds.keywords.sort()
         ds.keywords_fra = [k.lower() for k in ckan_obj['keywords_fra'].split(',')]
+        ds.keywords_fra = list(set(ds.keywords_fra))
         ds.keywords_fra.sort()
         ds.spatial = ckan_obj['spatial']
         ds.presentation_form = ckan_obj['presentation_form']
@@ -319,7 +342,8 @@ class MetadataDatasetModelGeogratisFactory():
             new_res.url = r['url']
             new_res.name = r['name']
             new_res.name_fra = r['name_fra']
-            new_res.format = r['format'].lower()
+            new_res.format = r['format']
             ds.resources.append(new_res)
+        ds.resources.sort(key=lambda r: r.url)
 
         return ds

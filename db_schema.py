@@ -29,6 +29,8 @@ class GeogratisRecord(g_base):
     od_status = Column(UnicodeText)
     geogratis_scanned = Column(Date, nullable=True)
     last_comparison = Column(Date, nullable=True)
+    differences = Column(UnicodeText, nullable=True)
+    ckan_json = Column(UnicodeText, nullable=True)
 
     def __repr__(self):
         return "<GeogratisRecord(id='%s'), title_en='%s', edited='%s'>" % (

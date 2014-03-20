@@ -93,7 +93,6 @@ def save_geogratis_record(session, uuid):
         updated_date = '2000-01-01'
         edited_date = '2000-01-01'
         geogratis_scanned = datetime.now().isoformat()
-        print geogratis_scanned
         if state != 'deleted':
             created_date = geo_rec_en['createdDate']
             updated_date = geo_rec_en['updatedDate']
@@ -147,3 +146,4 @@ elif args.start_index != '':
     read_geogratis(start_index=args.start_index)
 else:
     read_geogratis()
+print 'Scan completed {0}'.format(datetime.now().isoformat())
