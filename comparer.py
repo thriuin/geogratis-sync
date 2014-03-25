@@ -6,7 +6,7 @@ from ConfigParser import ConfigParser
 import ckanapi
 from datetime import datetime
 from db_schema import connect_to_database, find_all_geogratis_records, add_geogratis_record
-from metadata_model_factory import MetadataDatasetModelGeogratisFactory
+from geogratis_dataset_factory import MetadataDatasetModelGeogratisFactory
 import json
 import logging
 from sys import stdout

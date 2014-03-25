@@ -16,8 +16,8 @@ class MetadataDatasetModel():
     date_modified = ''
     data_series_name = ''
     data_series_name_fra = ''
-    keywords = []
-    keywords_fra = []
+    keywords = ''
+    keywords_fra = ''
     spatial = ''
     presentation_form = ''
     digital_object_identifier = ''
@@ -29,15 +29,15 @@ class MetadataDatasetModel():
     subject = []
     state = ''
     resources = []
-    type = 'dataset'
+    type = u'dataset'
     spatial_representation_type = ''
 
     # These fields are not used when comparing datasets
 
-    catalog_type = 'Data | Donn\u00e9es'
-    author_email = 'open-ouvert@tbs-sct.gc.ca'
-    license_id = 'ca-ogl-lgo'
-    ds_type = 'dataset'
+    catalog_type = u'Data | Donn\u00e9es'
+    author_email = u'open-ouvert@tbs-sct.gc.ca'
+    license_id = u'ca-ogl-lgo'
+    ds_type = u'dataset'
     ready_to_publish = False
     owner_org = ''
     maintenance_and_update_frequency = ''
@@ -46,9 +46,9 @@ class MetadataDatasetModel():
     language = ''
     date_published = ''
 
+
     def __init__(self):
-        self.keywords = []
-        self.keywords_fra = []
+
         self.geographic_region = []
         self.topic_category = []
         self.subject = []
@@ -60,10 +60,11 @@ class MetadataDatasetModel():
         for r in self.resources:
             my_resources.append(r.as_dict())
 
-        me = {'attribution': 'Contains information licensed under the Open Government Licence \u2013 Canada.',
-              'attribution_fra': 'Contient des informations autoris\u00e9es sous la Licence du gouvernement ouvert- Canada',
+        me = {'attribution': u'Contains information licensed under the Open Government Licence \u2013 Canada.',
+              'attribution_fra': u'Contient des informations autoris\u00e9es sous la Licence du gouvernement ouvert- Canada',
               'author_email': self.author_email,
               'browse_graphic_url': self.browse_graphic_url,
+              'catalog_type': self.catalog_type,
               'data_series_issue_identification': self.data_series_issue_identification,
               'data_series_issue_identification_fra': self.data_series_issue_identification_fra,
               'data_series_name': self.data_series_name,
@@ -73,6 +74,8 @@ class MetadataDatasetModel():
               'endpoint_url': self.endpoint_url,
               'endpoint_url_fra': self.endpoint_url_fra,
               'id': self.id,
+              'keywords': ','.join(self.keywords),
+              'keywords_fra': ','.join(self.keywords_fra),
               'language': self.language,
               'license_id': self.license_id,
               'maintenance_and_update_frequency': self.maintenance_and_update_frequency,
@@ -83,7 +86,6 @@ class MetadataDatasetModel():
               'presentation_form': self.presentation_form,
               'ready_to_publish': self.ready_to_publish,
               'regions': self.geographic_region,
-              'resources': my_resources,
               'spatial': self.spatial,
               'spatial_representation_type': self.spatial_representation_type,
               'state': self.state,
@@ -94,6 +96,8 @@ class MetadataDatasetModel():
               'type': self.ds_type,
               'url': self.url,
               'url_fra': self.url_fra}
+        if len(my_resources) > 0:
+            me['resources'] = my_resources
 
         return me
 
@@ -316,6 +320,7 @@ class MetadataResourcesModel():
         me['language'] = self.language
         me['url'] = self.url
         me['resource_type'] = self.resource_type
+        return me
 
     def equals(self, other):
 

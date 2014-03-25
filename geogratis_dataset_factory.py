@@ -12,6 +12,10 @@ from db_schema import connect_to_database, find_geogratis_record
 from metadata_model import MetadataDatasetModel, MetadataResourcesModel
 
 
+# Current Errors
+# 1 [None] --- create ValidationError {"maintenance_and_update_frequency":["Missing value"],"topic_category":["Tag Geoscientific Information does not belong to vocabulary iso_topic_categories"],"owner_org":["Missing value"],"date_published":["Missing value"],"catalog_type":["Missing value"],"keywords":["Missing value"],"keywords_fra":["Missing value"]}
+
+
 class MetadataDatasetModelGeogratisFactory():
 
     od_regions = {}
@@ -108,6 +112,8 @@ class MetadataDatasetModelGeogratisFactory():
     def convert_geogratis_json(self, geo_obj_en, geo_obj_fr):
 
         ds = MetadataDatasetModel()
+        ds.owner_org = 'nrcan-rncan'
+        ds.catalog_type = u'Geo Data | G\u00e9o'
 
         if not geo_obj_en is None:
             ds.id = geo_obj_en['id']
@@ -150,6 +156,13 @@ class MetadataDatasetModelGeogratisFactory():
             if ('citation' in geo_obj_en) and ('seriesIssue' in geo_obj_en['citation']):
                 ds.data_series_issue_identification = geo_obj_en['citation']['seriesIssue']
 
+            if ('citation' in geo_obj_en) and ('publicationDate' in geo_obj_en['citation']):
+                ds.date_published = geo_obj_en['citation']['publicationDate']
+                if len(ds.date_published) == 7:
+                                ds.date_published = '%s-01' % ds.date_published
+                if len(ds.date_published) == 4:
+                    ds.date_published = '%s-01-01' % ds.date_published
+
             if 'topicCategories' in geo_obj_en:
                 for topic in geo_obj_en['topicCategories']:
                     # Test for a non-standard exceptions specific to Geogratis
@@ -168,7 +181,7 @@ class MetadataDatasetModelGeogratisFactory():
                     # Finally, validate that the topic appears in the approved Open Data list of topics.
                     # Topics also determine which subjects are used, so for valid topics, assign the relevant subjects
                     if topic_key in self.od_topics:
-                        ds.topic_category.append(topic_key)
+                        ds.topic_category.append(self.od_topics[topic_key])
                         for s in self.od_topic_subjects[topic_key]:
                             if not s in ds.subject:
                                 ds.subject.append(self.od_subjects[s])
@@ -190,6 +203,8 @@ class MetadataDatasetModelGeogratisFactory():
                     else:
                         new_res.format = 'other'
                     ds.resources.append(new_res)
+
+            ds.maintenance_and_update_frequency = 'As Needed | Au besoin'
 
 
         # If the English record does not exist, then don't even bother. BOTH records must exist.
