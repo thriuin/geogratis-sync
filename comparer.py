@@ -5,7 +5,7 @@ __license__ = 'MIT'
 from ConfigParser import ConfigParser
 import ckanapi
 from datetime import datetime
-from db_schema import connect_to_database, find_all_geogratis_records, add_record, Packages
+from db_schema import connect_to_database, find_all_records, add_record, Packages
 from geogratis_dataset_factory import MetadataDatasetModelGeogratisFactory
 import json
 import logging
@@ -51,7 +51,7 @@ def main():
     session = connect_to_database()
     last_id = 0
     while True:
-        known_records = find_all_geogratis_records(session, query_limit=10, limit_id=last_id)
+        known_records = find_all_records(session, query_limit=10, limit_id=last_id)
 
         if len(known_records) == 0:
             break

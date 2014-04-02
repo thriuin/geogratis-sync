@@ -57,9 +57,9 @@ def connect_to_database():
     return Db_Session()
 
 
-def add_record(session, geo_rec):
+def add_record(session, new_record):
 
-    session.add(geo_rec)
+    session.add(new_record)
     session.commit()
 
 
@@ -76,7 +76,7 @@ def find_geogratis_record(session, uuid):
     return rec
 
 
-def find_all_geogratis_records(session, query_limit=1000, limit_id=None):
+def find_all_records(session, query_class=GeogratisRecord, query_limit=1000, limit_id=None):
 
     records = None
     try:
@@ -85,8 +85,8 @@ def find_all_geogratis_records(session, query_limit=1000, limit_id=None):
         if limit_id is None:
             limit_id = 0
 
-        records = session.query(GeogratisRecord).filter(GeogratisRecord.id > limit_id).\
-            order_by(GeogratisRecord.id).limit(query_limit).all()
+        records = session.query(query_class).filter(query_class.id > limit_id).\
+            order_by(query_class.id).limit(query_limit).all()
     except Exception, e:
         logging.error(e.message)
     return records

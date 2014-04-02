@@ -316,13 +316,13 @@ class MetadataDatasetModelGeogratisFactory():
         except ckanapi.NotFound, n:
             logging.warning('Dataset %s not found on CKAN site', uuid)
         except Exception, e:
-            logging.error(e)
+            logging.error(e.message)
         ckan_json = None
         if not package is None:
             try:
                 ckan_json = self.convert_ckan_json(package)
             except Exception, e:
-                logging.error(e)
+                logging.error(e.message)
         return ckan_json
 
 
