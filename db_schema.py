@@ -36,6 +36,13 @@ class GeogratisRecord(g_base):
         return "<GeogratisRecord(id='%s'), title_en='%s', edited='%s'>" % (
             self.id, self.title_en, self.edited)
 
+class Packages(g_base):
+    __tablename__ = 'package_updates'
+    id = Column(Integer, primary_key=True, nullable=False)
+    uuid = Column(UnicodeText)
+    status = Column(UnicodeText)
+    package = Column(UnicodeText)
+
 
 def connect_to_database():
 
@@ -50,9 +57,10 @@ def connect_to_database():
     return Db_Session()
 
 
-def add_geogratis_record(session, geo_rec):
+def add_record(session, geo_rec):
 
     session.add(geo_rec)
+    session.commit()
 
 
 def find_geogratis_record(session, uuid):
@@ -64,15 +72,21 @@ def find_geogratis_record(session, uuid):
         # This is perfectly legit
         rec = None
     except MultipleResultsFound, e:
-        logging.error(e)
+        logging.error(e.message)
     return rec
 
 
-def find_all_geogratis_records(session):
+def find_all_geogratis_records(session, query_limit=1000, limit_id=None):
 
     records = None
     try:
-        records = session.query(GeogratisRecord).yield_per(10)
+        if query_limit > 1000:
+            query_limit = 1000
+        if limit_id is None:
+            limit_id = 0
+
+        records = session.query(GeogratisRecord).filter(GeogratisRecord.id > limit_id).\
+            order_by(GeogratisRecord.id).limit(query_limit).all()
     except Exception, e:
-        logging.error(e)
+        logging.error(e.message)
     return records

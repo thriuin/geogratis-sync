@@ -5,7 +5,7 @@ __license__ = 'MIT'
 from ConfigParser import ConfigParser
 import ckanapi
 from datetime import datetime
-from db_schema import connect_to_database, find_all_geogratis_records, add_geogratis_record
+from db_schema import connect_to_database, find_all_geogratis_records, add_record, Packages
 from geogratis_dataset_factory import MetadataDatasetModelGeogratisFactory
 import json
 import logging
@@ -21,7 +21,7 @@ def get_od_package(uuid):
     try:
         package = ckansite.action.package_show(id=uuid)
     except Exception, e:
-        logging.error(e)
+        logging.error(e.message)
     return package
 
 
@@ -45,31 +45,49 @@ def compare_geo_ckan(geogratis_rec, ckan_rec):
 def main():
 
     factory = MetadataDatasetModelGeogratisFactory()
+    # Potentially doing a large ORM read that yields records 10 at a time, so ideally we want to commit
+    # changes at the same rate. With SQLAlchemy for Postgresql commits and yields needs to take place on
+    # different sessions.
     session = connect_to_database()
-    known_records = find_all_geogratis_records(session)
-    for r in known_records:
-        try:
-            if r.state == 'active':
-                ckan_record = factory.create_model_ckan(r.uuid)
-                geogratis_record = factory.create_model_geogratis(r.uuid)
-                if not ckan_record is None:
-                    if not geogratis_record.equals(ckan_record):
-                        diffs = geogratis_record.compare(ckan_record, self_label="Geogratis", other_label="CKAN")
-                        r.differences = "\n".join(item for item in diffs)
-                        r.ckan_json = json.dumps(geogratis_record.as_dict())
-                        r.od_status = 'Needs Update'
+    last_id = 0
+    while True:
+        known_records = find_all_geogratis_records(session, query_limit=10, limit_id=last_id)
+
+        if len(known_records) == 0:
+            break
+        else:
+            for r in known_records:
+                try:
+                    pkg_update = Packages()
+                    pkg_update.status = 'new'
+                    if r.state == 'active':
+                        ckan_record = factory.create_model_ckan(r.uuid)
+                        geogratis_record = factory.create_model_geogratis(r.uuid)
+                        pkg_update.uuid = r.uuid
+
+                        if not ckan_record is None:
+
+                            if not geogratis_record.equals(ckan_record):
+                                diffs = geogratis_record.compare(ckan_record, self_label="Geogratis", other_label="CKAN")
+                                r.differences = "\n".join(item for item in diffs)
+                                r.od_status = 'Needs Update'
+                                r.ckan_json = json.dumps(geogratis_record.as_dict())
+                            else:
+                                r.od_status = 'Current'
+                        else:
+                            r.ckan_json = json.dumps(geogratis_record.as_dict())
+                            r.od_status = 'New Record'
                     else:
-                        r.od_status = 'Current'
-                else:
-                    r.ckan_json = json.dumps(geogratis_record.as_dict())
-                    r.od_status = 'New Record'
-            else:
-                r.od_status = 'Ineligible'
-            r.last_comparison = datetime.now()
-            add_geogratis_record(session, r)
-        except Exception, e:
-            logging.error(e)
-    session.commit()
+                        r.od_status = 'Ineligible'
+                    r.last_comparison = datetime.now()
+                    add_record(session, r)
+                    if r.od_status == 'New Record' or r.od_status == "Needs Update":
+                        pkg_update.package = r.ckan_json
+                        add_record(session, pkg_update)
+                    last_id = r.id
+                except Exception, e:
+                    logging.error(e.message)
     session.close()
+
 
 main()

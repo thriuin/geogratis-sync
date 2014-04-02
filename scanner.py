@@ -7,7 +7,7 @@ import logging
 import requests
 import simplejson as json
 from datetime import datetime
-from db_schema import connect_to_database, GeogratisRecord, add_geogratis_record, find_geogratis_record
+from db_schema import connect_to_database, GeogratisRecord, add_record, find_geogratis_record
 from time import sleep
 
 
@@ -69,7 +69,6 @@ def read_geogratis(since='', start_index=''):
         logging.error(e)
     finally:
         if not session is None:
-            session.commit()
             session.close_all()
 
 
@@ -121,7 +120,7 @@ def save_geogratis_record(session, uuid):
             new_rec.state = state
             new_rec.geogratis_scanned = geogratis_scanned
 
-        add_geogratis_record(session, new_rec)
+        add_record(session, new_rec)
 
 argparser = argparse.ArgumentParser(
     description='Scan Geogratis and save record to a database'

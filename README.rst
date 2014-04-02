@@ -27,6 +27,12 @@ Use the following SQL script to create the table that holds the results of the G
         ckan_json TEXT
     );
 
+    CREATE TABLE package_updates (
+        id serial PRIMARY KEY NOT NULL,
+        uuid TEXT,
+        status TEXT,
+        package TEXT
+    );
 
 Open Data Meta Data Model
 -------------------------
