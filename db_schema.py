@@ -53,7 +53,6 @@ def connect_to_database():
 def add_geogratis_record(session, geo_rec):
 
     session.add(geo_rec)
-    session.commit()
 
 
 def find_geogratis_record(session, uuid):
@@ -73,7 +72,7 @@ def find_all_geogratis_records(session):
 
     records = None
     try:
-        records = session.query(GeogratisRecord)
+        records = session.query(GeogratisRecord).yield_per(10)
     except Exception, e:
         logging.error(e)
     return records

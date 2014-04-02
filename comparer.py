@@ -66,7 +66,7 @@ def main():
             r.od_status = 'Ineligible'
         r.last_comparison = datetime.now()
         add_geogratis_record(session, r)
-
+    session.commit()
     session.close()
 
 main()

@@ -69,6 +69,7 @@ def read_geogratis(since='', start_index=''):
         logging.error(e)
     finally:
         if not session is None:
+            session.commit()
             session.close_all()
 
 
