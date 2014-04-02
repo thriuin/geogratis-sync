@@ -317,10 +317,13 @@ class MetadataDatasetModelGeogratisFactory():
             logging.warning('Dataset %s not found on CKAN site', uuid)
         except Exception, e:
             logging.error(e)
+        ckan_json = None
         if not package is None:
-            return self.convert_ckan_json(package)
-        else:
-            return None
+            try:
+                ckan_json = self.convert_ckan_json(package)
+            except Exception, e:
+                logging.error(e)
+        return ckan_json
 
 
     def convert_ckan_json(self, ckan_obj):
@@ -334,7 +337,8 @@ class MetadataDatasetModelGeogratisFactory():
         ds.title_fra = ckan_obj['title_fra']
         ds.notes = ckan_obj['notes']
         ds.notes_fra = ckan_obj['notes_fra']
-        ds.date_modified = ckan_obj['date_modified'][0:10] # only using the date portion
+        if 'date_modified' in ckan_obj:
+            ds.date_modified = ckan_obj['date_modified'][0:10] # only using the date portion
         ds.data_series_name = ckan_obj['data_series_name']
         ds.data_series_name_fra = ckan_obj['data_series_name_fra']
         ds.keywords = [k.lower().strip() for k in ckan_obj['keywords'].split(',')]

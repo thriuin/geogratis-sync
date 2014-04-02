@@ -48,24 +48,27 @@ def main():
     session = connect_to_database()
     known_records = find_all_geogratis_records(session)
     for r in known_records:
-        if r.state == 'active':
-            ckan_record = factory.create_model_ckan(r.uuid)
-            geogratis_record = factory.create_model_geogratis(r.uuid)
-            if not ckan_record is None:
-                if not geogratis_record.equals(ckan_record):
-                    diffs = geogratis_record.compare(ckan_record, self_label="Geogratis", other_label="CKAN")
-                    r.differences = "\n".join(item for item in diffs)
-                    r.ckan_json = json.dumps(geogratis_record.as_dict())
-                    r.od_status = 'Needs Update'
+        try:
+            if r.state == 'active':
+                ckan_record = factory.create_model_ckan(r.uuid)
+                geogratis_record = factory.create_model_geogratis(r.uuid)
+                if not ckan_record is None:
+                    if not geogratis_record.equals(ckan_record):
+                        diffs = geogratis_record.compare(ckan_record, self_label="Geogratis", other_label="CKAN")
+                        r.differences = "\n".join(item for item in diffs)
+                        r.ckan_json = json.dumps(geogratis_record.as_dict())
+                        r.od_status = 'Needs Update'
+                    else:
+                        r.od_status = 'Current'
                 else:
-                    r.od_status = 'Current'
+                    r.ckan_json = json.dumps(geogratis_record.as_dict())
+                    r.od_status = 'New Record'
             else:
-                r.ckan_json = json.dumps(geogratis_record.as_dict())
-                r.od_status = 'New Record'
-        else:
-            r.od_status = 'Ineligible'
-        r.last_comparison = datetime.now()
-        add_geogratis_record(session, r)
+                r.od_status = 'Ineligible'
+            r.last_comparison = datetime.now()
+            add_geogratis_record(session, r)
+        except Exception, e:
+            logging.error(e)
     session.commit()
     session.close()
 
