@@ -39,6 +39,7 @@ class MetadataDatasetModel():
     license_id = u'ca-ogl-lgo'
     ds_type = u'dataset'
     ready_to_publish = False
+    portal_release_date = ''
     owner_org = ''
     maintenance_and_update_frequency = ''
     endpoint_url = ''
@@ -83,6 +84,7 @@ class MetadataDatasetModel():
               'notes': self.notes,
               'notes_fra': self.notes_fra,
               'owner_org': self.owner_org,
+              'portal_release_date': self.portal_release_date,
               'presentation_form': self.presentation_form,
               'ready_to_publish': self.ready_to_publish,
               'regions': self.geographic_region,

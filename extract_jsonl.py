@@ -17,6 +17,11 @@ argparser.add_argument('-m', '--maxrecords',
                        type=int,
                        dest='maxrecords',
                        help='Maximum number of records to retrieve. 0 means retrieve all')
+argparser.add_argument('-n', '--newonly',
+                       action='store_true',
+                       dest='newonly',
+                       default=False,
+                       help='Only extract new records')
 args = argparser.parse_args()
 
 session = connect_to_database()
@@ -29,7 +34,9 @@ while True:
         break
     else:
         for r in known_records:
-            if r.status == 'new' and r.package is not None:
+            if args.newonly and r.status == 'update':
+                continue
+            if (r.status == 'new' or r.status == 'update') and r.package is not None:
                 print >> jfile, r.package
                 rec_count += 1
                 if 0 < args.maxrecords < rec_count:

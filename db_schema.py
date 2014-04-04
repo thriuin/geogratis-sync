@@ -63,11 +63,11 @@ def add_record(session, new_record):
     session.commit()
 
 
-def find_geogratis_record(session, uuid):
+def find_record_by_uuid(session, uuid, query_class=GeogratisRecord):
 
     rec = None
     try:
-        rec = session.query(GeogratisRecord).filter(GeogratisRecord.uuid == uuid).one()
+        rec = session.query(query_class).filter(query_class.uuid == uuid).one()
     except NoResultFound:
         # This is perfectly legit
         rec = None

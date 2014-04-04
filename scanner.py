@@ -7,7 +7,7 @@ import logging
 import requests
 import simplejson as json
 from datetime import datetime
-from db_schema import connect_to_database, GeogratisRecord, add_record, find_geogratis_record
+from db_schema import connect_to_database, GeogratisRecord, add_record, find_record_by_uuid
 from time import sleep
 
 
@@ -87,7 +87,7 @@ def save_geogratis_record(session, uuid):
             state = 'missing french'
         else:
             title_fr = geo_rec_fr['title']
-        new_rec = find_geogratis_record(session, geo_rec_en['id'])
+        new_rec = find_record_by_uuid(session, geo_rec_en['id'])
 
         created_date = '2000-01-01'
         updated_date = '2000-01-01'

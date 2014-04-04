@@ -8,7 +8,7 @@ import re
 import simplejson as json
 
 from ConfigParser import ConfigParser
-from db_schema import connect_to_database, find_geogratis_record
+from db_schema import connect_to_database, find_record_by_uuid
 from metadata_model import MetadataDatasetModel, MetadataResourcesModel
 
 
@@ -98,7 +98,7 @@ class MetadataDatasetModelGeogratisFactory():
     def create_model_geogratis(self, uuid):
         session = connect_to_database()
         try:
-            geogratis_rec = find_geogratis_record(session, uuid)
+            geogratis_rec = find_record_by_uuid(session, uuid)
             geo_rec_en = json.loads(geogratis_rec.json_record_en)
             geo_rec_fr = json.loads(geogratis_rec.json_record_fr)
         finally:

@@ -5,11 +5,12 @@ __license__ = 'MIT'
 from ConfigParser import ConfigParser
 import ckanapi
 from datetime import datetime
-from db_schema import connect_to_database, find_all_records, add_record, Packages
+from db_schema import connect_to_database, find_all_records, add_record, Packages, find_record_by_uuid
 from geogratis_dataset_factory import MetadataDatasetModelGeogratisFactory
 import json
 import logging
 from sys import stdout
+import time
 
 def get_od_package(uuid):
     ini_config = ConfigParser()
@@ -58,12 +59,20 @@ def main():
         else:
             for r in known_records:
                 try:
-                    pkg_update = Packages()
+                    # In order to avoid multiple updates, only allow for one instance of an update per uuid.
+                    # Previous updates are overridden with the latest update
+                    pkg_update = find_record_by_uuid(session, r.uuid, query_class=Packages)
+                    if pkg_update is None:
+                        pkg_update = Packages()
                     pkg_update.status = 'new'
                     if r.state == 'active':
                         ckan_record = factory.create_model_ckan(r.uuid)
                         geogratis_record = factory.create_model_geogratis(r.uuid)
                         pkg_update.uuid = r.uuid
+
+                        # Set the dataset for immediate release on the Registry
+                        geogratis_record.portal_release_date = time.strftime("%Y-%m-%d")
+                        geogratis_record.ready_to_publish = True
 
                         if not ckan_record is None:
 
@@ -72,6 +81,7 @@ def main():
                                 r.differences = "\n".join(item for item in diffs)
                                 r.od_status = 'Needs Update'
                                 r.ckan_json = json.dumps(geogratis_record.as_dict())
+                                pkg_update.status = 'update'
                             else:
                                 r.od_status = 'Current'
                         else:
