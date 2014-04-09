@@ -20,18 +20,18 @@ Use the following SQL script to create the table that holds the results of the G
         json_record_en TEXT,
         json_record_fr TEXT,
         geogratis_scanned TIMESTAMP WITHOUT TIME ZONE,
-        last_comparison TIMESTAMP WITHOUT TIME ZONE,
-        od_updated TIMESTAMP WITHOUT TIME ZONE,
-        od_status TEXT,
-        differences TEXT,
-        ckan_json TEXT
+        od_status TEXT
     );
 
     CREATE TABLE package_updates (
         id serial PRIMARY KEY NOT NULL,
         uuid TEXT,
         status TEXT,
-        package TEXT
+        package TEXT,
+        latest_comparison TIMESTAMP WITHOUT TIME ZONE,
+        latest_posted TIMESTAMP WITHOUT TIME ZONE,
+        differences TEXT,
+        ckan_json TEXT
     );
 
 Open Data Meta Data Model
@@ -42,9 +42,10 @@ whether or not the Open Data record is different from the Geogratis records, onl
 compared.
 
 
+Dataset Metadata
+^^^^^^^^^^^^^^^^
+
 +----------------------------------+--------------------------------------+
-| Dataset Metadata                                                        |
-+==================================+======================================+
 | CKAN                             | Geogratis                            |
 +==================================+======================================+
 | url                              | N/A (Calculated field)               |
@@ -89,9 +90,10 @@ compared.
 +----------------------------------+--------------------------------------+
 
 
+Resource Metadata (list)
+^^^^^^^^^^^^^^^^^^^^^^^^
+
 +----------------------------------+--------------------------------------+
-| Resource Metadata (list)                                                |
-+==================================+======================================+
 | CKAN                             | Geogratis                            |
 +==================================+======================================+
 | name                             | files[].description (EN)             |

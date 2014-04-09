@@ -25,12 +25,9 @@ class GeogratisRecord(g_base):
     state = Column(UnicodeText)
     json_record_en = Column(UnicodeText)
     json_record_fr = Column(UnicodeText)
-    od_updated = Column(Date, nullable=True)
     od_status = Column(UnicodeText)
     geogratis_scanned = Column(Date, nullable=True)
-    last_comparison = Column(Date, nullable=True)
-    differences = Column(UnicodeText, nullable=True)
-    ckan_json = Column(UnicodeText, nullable=True)
+
 
     def __repr__(self):
         return "<GeogratisRecord(id='%s'), title_en='%s', edited='%s'>" % (
@@ -42,7 +39,10 @@ class Packages(g_base):
     uuid = Column(UnicodeText)
     status = Column(UnicodeText)
     package = Column(UnicodeText)
-
+    latest_comparison = Column(Date, nullable=True)
+    latest_posted = Column(Date, nullable=True)
+    differences = Column(UnicodeText, nullable=True)
+    ckan_json = Column(UnicodeText, nullable=True)
 
 def connect_to_database():
 

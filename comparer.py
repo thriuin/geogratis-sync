@@ -79,20 +79,20 @@ def main():
                             if not geogratis_record.equals(ckan_record):
                                 diffs = geogratis_record.compare(ckan_record, self_label="Geogratis", other_label="CKAN")
                                 r.differences = "\n".join(item for item in diffs)
-                                r.od_status = 'Needs Update'
+                                pkg_update.od_status = 'Needs Update'
                                 r.ckan_json = json.dumps(geogratis_record.as_dict())
                                 pkg_update.status = 'update'
                             else:
-                                r.od_status = 'Current'
+                                pkg_update.od_status = 'Current'
                         else:
-                            r.ckan_json = json.dumps(geogratis_record.as_dict())
-                            r.od_status = 'New Record'
+                            pkg_update.ckan_json = json.dumps(geogratis_record.as_dict())
+                            pkg_update.od_status = 'New Record'
                     else:
-                        r.od_status = 'Ineligible'
-                    r.last_comparison = datetime.now()
+                        pkg_update.od_status = 'Ineligible'
+                    pkg_update.last_comparison = datetime.now()
                     add_record(session, r)
-                    if r.od_status == 'New Record' or r.od_status == "Needs Update":
-                        pkg_update.package = r.ckan_json
+                    if pkg_update.od_status == 'New Record' or pkg_update.od_status == "Needs Update":
+                        pkg_update.package = pkg_update.ckan_json
                         add_record(session, pkg_update)
                     last_id = r.id
                 except Exception, e:
