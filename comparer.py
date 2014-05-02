@@ -46,9 +46,11 @@ def compare_geo_ckan(geogratis_rec, ckan_rec):
 def main():
 
     factory = MetadataDatasetModelGeogratisFactory()
-    # Potentially doing a large ORM read that yields records 10 at a time, so ideally we want to commit
-    # changes at the same rate. With SQLAlchemy for Postgresql commits and yields needs to take place on
-    # different sessions.
+
+    # Potentially doing a VERY large ORM query. If we don't limit the read, then SQLAlchemy will try to pull
+    # everything into memory. Therefore the query must be paged. Paging requires keeping track of the sequential
+    # record ID's
+
     session = connect_to_database()
     last_id = 0
     while True:
