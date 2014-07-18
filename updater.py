@@ -31,7 +31,11 @@ def main():
         else:
             for r in package_stream:
                 print u'Processing dataset {0}'.format(r.id)
-                new_pkg_dict = json.loads(r.ckan_json.decode('utf-8'))
+                try:
+                    new_pkg_dict = json.loads(r.ckan_json.decode('utf-8'))
+                except AttributeError as a:
+                    print u'AttributeError {0}'.format(unicode(a))
+                    continue
                 is_new = False
                 try:
                     pkg_info = ckansite.action.package_show(id=r.uuid)

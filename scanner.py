@@ -10,6 +10,15 @@ from datetime import datetime
 from db_schema import connect_to_database, GeogratisRecord, add_record, find_record_by_uuid
 from time import sleep
 
+def _get_next_link(geo_page):
+    next_link = ''
+    for link in geo_page['links']:
+        if link['rel'] == 'next':
+            next_link = link['href']
+            logging.warn(next_link)
+            break
+    print 'Next link: {0}'.format(next_link)
+    return next_link
 
 def get_geogratis_rec(uuid, lang='en', data_format='json'):
     geog_url = 'http://geogratis.gc.ca/api/{0}/nrcan-rncan/ess-sst/{1}.{2}'.format(
@@ -38,32 +47,29 @@ def read_geogratis(since='', start_index=''):
         # Get the first page of the feed
         if r.status_code == 200:
             feed_page = r.json()
-            for link in feed_page['links']:
-                if link['rel'] == 'next':
-                    next_link = link['href']
-                    logging.warn(next_link)
-                    break
+            next_link = _get_next_link(feed_page)
+            print '{0} Records Found'.format(feed_page['count'])
             for product in feed_page['products']:
-                save_geogratis_record(session, product['id'])
-        # Keep polling until exhausted
-        while next_link != '':
-            geog_url = next_link
-            r = requests.get(geog_url)
-            feed_page = r.json()
-            next_link = ''
-            for link in feed_page['links']:
-                if link['rel'] == 'next':
-                    next_link = link['href']
-                    logging.warn(next_link)
-                    break
-            for product in feed_page['products']:
-
-                # Don't crash on every call - log the error and continue
                 try:
                     save_geogratis_record(session, product['id'])
                 except Exception, e:
                     logging.error('{0} failed to load'.format(product['id']))
                     logging.error(e)
+
+            # Keep polling until exhausted
+            while next_link != '':
+                geog_url = next_link
+                r = requests.get(geog_url)
+                feed_page = r.json()
+                next_link = _get_next_link(feed_page)
+                for product in feed_page['products']:
+
+                    # Don't crash on every call - log the error and continue
+                    try:
+                        save_geogratis_record(session, product['id'])
+                    except Exception, e:
+                        logging.error('{0} failed to load'.format(product['id']))
+                        logging.error(e)
 
     except Exception, e:
         logging.error(e)

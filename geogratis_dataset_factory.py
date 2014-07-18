@@ -156,10 +156,12 @@ class MetadataDatasetModelGeogratisFactory():
             if ('citation' in geo_obj_en) and ('seriesIssue' in geo_obj_en['citation']):
                 ds.data_series_issue_identification = geo_obj_en['citation']['seriesIssue']
 
-            if ('citation' in geo_obj_en) and ('publicationDate' in geo_obj_en['citation']) and \
+            if ('publishedDate' in geo_obj_en):
+                ds.date_published = geo_obj_en['publishedDate']
+            elif ('citation' in geo_obj_en) and ('publicationDate' in geo_obj_en['citation']) and \
                     0 < len(geo_obj_en['citation']['publicationDate']):
                 ds.date_published = geo_obj_en['citation']['publicationDate']
-            else:
+            elif 'createdDate' in geo_obj_en:
                 ds.date_published = geo_obj_en['createdDate']
             if len(ds.date_published) == 7:
                 ds.date_published = '%s-01' % ds.date_published
@@ -277,6 +279,7 @@ class MetadataDatasetModelGeogratisFactory():
         keyword = keyword.strip().replace("/", " - ")
         keyword = keyword.replace("(", "- ").replace(")", "") # change "one (two)" to "one - two"
         keyword = keyword.replace("[", "- ").replace("]", "") # change "one [two]" to "one - two"
+        keyword = keyword.replace("+", "") # Get rid of plus signs
         keyword = keyword.lower().strip()
         return keyword
 
