@@ -38,7 +38,7 @@ class Packages(g_base):
     id = Column(Integer, primary_key=True, nullable=False)
     uuid = Column(UnicodeText)
     status = Column(UnicodeText)
-    package = Column(UnicodeText)
+    status_message = Column(UnicodeText)
     latest_comparison = Column(Date, nullable=True)
     latest_posted = Column(Date, nullable=True)
     differences = Column(UnicodeText, nullable=True)

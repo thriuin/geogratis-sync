@@ -59,18 +59,19 @@ def main():
         if len(known_records) == 0:
             break
         else:
-            for r in known_records:
+            for geo_rec in known_records:
+                print 'ID: {0} UUID: {1}'.format(geo_rec.id, geo_rec.uuid)
                 try:
                     # In order to avoid multiple updates, only allow for one instance of an update per uuid.
                     # Previous updates are overridden with the latest update
-                    pkg_update = find_record_by_uuid(session, r.uuid, query_class=Packages)
+                    pkg_update = find_record_by_uuid(session, geo_rec.uuid, query_class=Packages)
                     if pkg_update is None:
                         pkg_update = Packages()
                     pkg_update.status = 'new'
-                    if r.state == 'active':
-                        ckan_record = factory.create_model_ckan(r.uuid)
-                        geogratis_record = factory.create_model_geogratis(r.uuid)
-                        pkg_update.uuid = r.uuid
+                    if geo_rec.state == 'active':
+                        ckan_record = factory.create_model_ckan(geo_rec.uuid)
+                        geogratis_record = factory.create_model_geogratis(geo_rec.uuid)
+                        pkg_update.uuid = geo_rec.uuid
 
                         # Set the dataset for immediate release on the Registry
                         geogratis_record.portal_release_date = time.strftime("%Y-%m-%d")
@@ -80,23 +81,22 @@ def main():
 
                             if not geogratis_record.equals(ckan_record):
                                 diffs = geogratis_record.compare(ckan_record, self_label="Geogratis", other_label="CKAN")
-                                r.differences = "\n".join(item for item in diffs)
-                                pkg_update.od_status = 'Needs Update'
-                                r.ckan_json = json.dumps(geogratis_record.as_dict())
+                                pkg_update.differences = "\n".join(item for item in diffs)
+                                geo_rec.od_status = 'Needs Update'
+                                pkg_update.ckan_json = json.dumps(geogratis_record.as_dict())
                                 pkg_update.status = 'update'
                             else:
-                                pkg_update.od_status = 'Current'
+                                geo_rec.od_status = 'Current'
                         else:
                             pkg_update.ckan_json = json.dumps(geogratis_record.as_dict())
-                            pkg_update.od_status = 'New Record'
+                            geo_rec.od_status = 'New Record'
                     else:
-                        pkg_update.od_status = 'Ineligible'
+                        geo_rec.od_status = 'Ineligible'
                     pkg_update.last_comparison = datetime.now()
-                    add_record(session, r)
-                    if pkg_update.od_status == 'New Record' or pkg_update.od_status == "Needs Update":
-                        pkg_update.package = pkg_update.ckan_json
+                    add_record(session, geo_rec)
+                    if geo_rec.od_status == 'New Record' or geo_rec.od_status == "Needs Update":
                         add_record(session, pkg_update)
-                    last_id = r.id
+                    last_id = geo_rec.id
                 except Exception, e:
                     logging.error(e.message)
     session.close()

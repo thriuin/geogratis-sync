@@ -1,0 +1,8 @@
+SQLAlchemy>=0.9.3
+argparse>=1.2.1
+psycopg2>=2.5.2
+requests>=2.2.1
+simplejson>=3.3.3
+-e git+https://github.com/ckan/ckanapi@master#egg=ckanapi-dev
+
+

@@ -117,7 +117,7 @@ class MetadataDatasetModelGeogratisFactory():
 
         if not geo_obj_en is None:
             ds.id = geo_obj_en['id']
-            ds.url = 'http://data.gc.ca/data/en/dataset/{0}'.format(geo_obj_en['id'])
+            ds.url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/{0}'.format(geo_obj_en['id'])
             ds.title = geo_obj_en['title']
             ds.notes = geo_obj_en['summary']
             ds.date_modified = geo_obj_en.get('updatedDate', '2000-01-01')
@@ -208,6 +208,9 @@ class MetadataDatasetModelGeogratisFactory():
                     else:
                         new_res.format = 'other'
                     ds.resources.append(new_res)
+            # Add a check for datasets with 0 resources
+            if len(ds.resources) == 0:
+                ds.state = 'missing'
 
             ds.maintenance_and_update_frequency = 'As Needed | Au besoin'
 
@@ -220,7 +223,7 @@ class MetadataDatasetModelGeogratisFactory():
         # @TODO - Finish adding the code that parses the Geogratis records and converts them a model object
         # Only French specific fields are extracted
         if not geo_obj_fr is None:
-            ds.url_fra = 'http://data.gc.ca/data/fr/dataset/{0}'.format(geo_obj_fr['id'])
+            ds.url_fra = 'http://geogratis.gc.ca/api/fr/nrcan-rncan/ess-sst/{0}'.format(geo_obj_fr['id'])
             ds.title_fra = geo_obj_fr['title']
             ds.notes_fra = geo_obj_fr['summary']
             if 'citation' in geo_obj_fr:
@@ -279,7 +282,7 @@ class MetadataDatasetModelGeogratisFactory():
         keyword = keyword.strip().replace("/", " - ")
         keyword = keyword.replace("(", "- ").replace(")", "") # change "one (two)" to "one - two"
         keyword = keyword.replace("[", "- ").replace("]", "") # change "one [two]" to "one - two"
-        keyword = keyword.replace("+", "") # Get rid of plus signs
+        keyword = keyword.replace("+", "")                    # Get rid of plus signs
         keyword = keyword.lower().strip()
         return keyword
 

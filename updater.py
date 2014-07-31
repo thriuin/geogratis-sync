@@ -47,6 +47,7 @@ def main():
                     else:
                         ckansite.call_action('package_update', new_pkg_dict)
                     r.status = 'posted'
+                    r.status_message = ''
                     r.latest_posted = datetime.now()
                     add_record(session, r)
                     continue
@@ -54,10 +55,16 @@ def main():
                     print u'Not Authorized {0}'.format(unicode(e))
                     continue
                 except ckanapi.CKANAPIError as c:
-                    print u'CKAN API error {0}'.format(unicode(c))
+                    r.status = 'error'
+                    r.status_message = u'CKAN API error {0}'.format(unicode(c))
+                    add_record(session, r)
+                    print r.status_message
                     continue
                 except ckanapi.errors.ValidationError as v:
-                    print u'Validation error {0}'.format(unicode(v.error_dict))
+                    r.status = 'error'
+                    r.status_message = u'Validation error {0}'.format(unicode(v.error_dict))
+                    add_record(session, r)
+                    print r.status_message
                     continue
 
             break
