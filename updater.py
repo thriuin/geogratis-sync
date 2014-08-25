@@ -6,6 +6,7 @@ import ckanapi
 from ConfigParser import ConfigParser
 from datetime import datetime
 from db_schema import connect_to_database, Packages, add_record
+from time import sleep
 import json
 
 def main():
@@ -23,13 +24,14 @@ def main():
     last_id = 0
     while True:
         package_stream = session.query(Packages).filter(Packages.id > last_id)
-        package_stream = package_stream.filter(Packages.status.in_(['new'])).\
+        package_stream = package_stream.filter(Packages.status.in_(["new", "update"])).\
                                                order_by(Packages.id).all()
 
         if len(package_stream) == 0:
             break
         else:
             for r in package_stream:
+                sleep(60)
                 print u'Processing dataset {0}'.format(r.id)
                 try:
                     new_pkg_dict = json.loads(r.ckan_json.decode('utf-8'))
@@ -66,7 +68,6 @@ def main():
                     add_record(session, r)
                     print r.status_message
                     continue
-
             break
 
 main()
