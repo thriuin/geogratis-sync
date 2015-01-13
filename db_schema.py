@@ -37,12 +37,10 @@ class Packages(g_base):
     __tablename__ = 'package_updates'
     id = Column(Integer, primary_key=True, nullable=False)
     uuid = Column(UnicodeText)
-    status = Column(UnicodeText)
-    status_message = Column(UnicodeText)
-    latest_comparison = Column(Date, nullable=True)
-    latest_posted = Column(Date, nullable=True)
-    differences = Column(UnicodeText, nullable=True)
+    created = Column(Date, nullable=True)
+    updated = Column(Date, nullable=True)
     ckan_json = Column(UnicodeText, nullable=True)
+    message = Column(UnicodeText, nullable=True)
 
 def connect_to_database():
 
@@ -72,6 +70,8 @@ def find_record_by_uuid(session, uuid, query_class=GeogratisRecord):
         # This is perfectly legit
         rec = None
     except MultipleResultsFound, e:
+        logging.error(e.message)
+    except Exception, e:
         logging.error(e.message)
     return rec
 
