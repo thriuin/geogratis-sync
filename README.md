@@ -85,12 +85,10 @@ Use the following SQL script to create the table that holds the results of the G
     CREATE TABLE package_updates (
         id serial PRIMARY KEY NOT NULL,
         uuid TEXT,
-        status TEXT,
-        status_message TEXT DEFAULT '',
-        latest_comparison TIMESTAMP WITHOUT TIME ZONE,
-        latest_posted TIMESTAMP WITHOUT TIME ZONE,
-        differences TEXT,
-        ckan_json TEXT
+        created TIMESTAMP WITHOUT TIME ZONE,
+        updated TIMESTAMP WITHOUT TIME ZONE,
+        ckan_json TEXT,
+        message TEXT DEFAULT ''
     );
     ```
 
