@@ -1,6 +1,7 @@
 __author__ = 'Statistics Canada'
 
 from ConfigParser import ConfigParser
+from datetime import datetime
 from db_schema import connect_to_database, Packages
 import argparse
 
@@ -45,5 +46,8 @@ argparser.add_argument('-s', '--since', action='store', default='', dest='since'
 argparser.add_argument('-f', '--file', action='store', default='', dest='dumpfile',
                        help='File to write dump to')
 args = argparser.parse_args()
-dump_jsonl(since=args.since, dumpfile=args.dumpfile)
+dumpfile = args.dumpfile
+if dumpfile == '':
+    dumpfile = 'geodump_{0}.jsonl'.format(datetime.now().strftime('%Y-%m-%d-%H%M%S'))
+dump_jsonl(since=args.since, dumpfile=dumpfile)
 

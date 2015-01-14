@@ -56,8 +56,8 @@ def get_geogratis_rec(uuid, lang='en', data_format='json'):
 
 def main(since='', start_index='', monitor=False):
     geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?alt=json'
+    monitor_setting = monitor_setting = get_setting('monitor_link')
     if monitor:
-        monitor_setting = get_setting('monitor_link')
         if monitor_setting.setting_value is None:
             geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min=2015-01-01&alt=json'
         else:

@@ -64,7 +64,7 @@ def main():
                 print 'ID: {0}'.format(scan_record.id)
                 try:
                     if scan_date and scan_record.geogratis_scanned:
-                        if scan_record.geogratis_scanned < scan_date:
+                        if scan_record.geogratis_scanned > scan_date:
                             last_id = scan_record.id
                             continue
                     # In order to avoid multiple updates, only allow for one instance of an update per uuid.
