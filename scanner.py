@@ -7,18 +7,49 @@ import logging
 import requests
 import simplejson as json
 from datetime import datetime
-from db_schema import connect_to_database, GeogratisRecord, add_record, find_record_by_uuid
+from db_schema import connect_to_database, GeogratisRecord, add_record, find_record_by_uuid, Settings
 from time import sleep
 
-def _get_next_link(geo_page):
+def _get_link(geo_page, link_rel='next'):
     next_link = ''
     for link in geo_page['links']:
-        if link['rel'] == 'next':
+        if link['rel'] == link_rel:
             next_link = link['href']
             logging.warn(next_link)
             break
     print 'Next link: {0}'.format(next_link)
     return next_link
+
+
+def _get_setting(key_name):
+    session = None
+    setting_value = None
+    try:
+        session = connect_to_database()
+        rec =session.query(Settings).filter(Settings.setting_name == key_name).one()
+        setting_value = rec.setting_value
+    except Exception, e:
+        logging.error(e)
+    finally:
+        if not session is None:
+            session.close_all()
+    return setting_value
+
+
+def _save_setting(key_name, key_value):
+    setting = Settings()
+    setting.setting_name = key_name
+    setting.setting_value = key_value
+    session = None
+    try:
+        session = connect_to_database()
+        add_record(session, setting)
+    except Exception, e:
+        logging.error(e)
+    finally:
+        if not session is None:
+            session.close_all()
+
 
 def get_geogratis_rec(uuid, lang='en', data_format='json'):
     geog_url = 'http://geogratis.gc.ca/api/{0}/nrcan-rncan/ess-sst/{1}.{2}'.format(
@@ -33,9 +64,14 @@ def get_geogratis_rec(uuid, lang='en', data_format='json'):
     return geo_result
 
 
-def read_geogratis(since='', start_index=''):
+def read_geogratis(since='', start_index='', monitor=False):
     geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?alt=json'
-    if since != '':
+    if monitor:
+        monitor_link = _get_setting('monitor_link')
+        if not monitor_link:
+            monitor_link = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min=2015-01-01&alt=json'
+        geog_url = monitor_link
+    elif since != '':
         geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min={0}&alt=json'.format(since)
     elif start_index != '':
         geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?start-index={0}&alt=json'.format(start_index)
@@ -43,33 +79,45 @@ def read_geogratis(since='', start_index=''):
     session = None
     try:
         session = connect_to_database()
-        next_link = ''
         # Get the first page of the feed
         if r.status_code == 200:
             feed_page = r.json()
-            next_link = _get_next_link(feed_page)
+
+            # Save the monitor link for future use
+            monitor_link = _get_link(feed_page, 'monitor')
+            if monitor_link != '':
+                _save_setting('monitor_link', monitor_link)
+
+            next_link = _get_link(feed_page)
+
             print '{0} Records Found'.format(feed_page['count'])
-            for product in feed_page['products']:
-                try:
-                    save_geogratis_record(session, product['id'])
-                except Exception, e:
-                    logging.error('{0} failed to load'.format(product['id']))
-                    logging.error(e)
 
-            # Keep polling until exhausted
-            while next_link != '':
-                geog_url = next_link
-                r = requests.get(geog_url)
-                feed_page = r.json()
-                next_link = _get_next_link(feed_page)
+            if 'products' in feed_page:
                 for product in feed_page['products']:
-
-                    # Don't crash on every call - log the error and continue
                     try:
                         save_geogratis_record(session, product['id'])
                     except Exception, e:
                         logging.error('{0} failed to load'.format(product['id']))
                         logging.error(e)
+
+            # Keep polling until exhausted
+            while next_link != '':
+                geog_url = next_link
+                r = requests.get(geog_url)
+                feed_page = r.json()            # Save the monitor link for future use
+                monitor_link = _get_link(feed_page, 'monitor')
+                if monitor_link != '':
+                    _save_setting('monitor_link', monitor_link)
+                next_link = _get_link(feed_page)
+                if 'products' in feed_page:
+                    for product in feed_page['products']:
+
+                        # Don't crash on every call - log the error and continue
+                        try:
+                            save_geogratis_record(session, product['id'])
+                        except Exception, e:
+                            logging.error('{0} failed to load'.format(product['id']))
+                            logging.error(e)
 
     except Exception, e:
         logging.error(e)
@@ -136,6 +184,7 @@ argparser.add_argument('-d', '--since', action='store', default='', dest='since'
 argparser.add_argument('-l', '--log', action='store', default='', dest='log_filename', help='Log to file')
 argparser.add_argument('-s', '--start_index', action='store', default='', dest='start_index',
                        help='Start-index')
+argparser.add_argument('-m', '--monitor', action='store_true', default=False, dest='monitor')
 
 args = argparser.parse_args()
 
@@ -146,7 +195,9 @@ if args.log_filename != '':
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                         datefmt='%m/%d/%Y %I:%M:%S %p')
 print args.start_index
-if args.since != '':
+if args.monitor:
+    read_geogratis('', '', True)
+elif args.since != '':
     read_geogratis(since=args.since)
 elif args.start_index != '':
     read_geogratis(start_index=args.start_index)

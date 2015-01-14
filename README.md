@@ -90,34 +90,30 @@ Use the following SQL script to create the table that holds the results of the G
         ckan_json TEXT,
         message TEXT DEFAULT ''
     );
+    
+    CREATE TABLE settings (
+        setting_name TEXT PRIMARY KEY,
+        setting_value TEXT DEFAULT ''
+    );
     ```
 
-The Geogratis scanner will need read/write access to these two tables.
+The Geogratis scanner will need read/write access to these three tables.
 
 ### geogratis.ini file
 
 The scanner needs a number of runtime parameters such as database connection information. Set the
 following values in this .ini.
 
-> [sqlalchemy]
-> 
-> sqlalchemy.url = postgresql://dbuser:password@hostname/database
->
-> [ckan]
-> 
-> ckan.remote_portal = http://demo.ckan.org
-> ckan.api_key = 00000000-aaaa-1111-bbbb-cccccccccccc
-> ckan.user_agent = my_dataharvester/1.0 (+http://demo.ckan.org)
-
-1. *sqlalchemy.url*: This is the SQLAlchemy database connection string to the PostgreSQL database
-2. *ckan.remote_portal*: This is the URL to the CKAN instance that you harvest data into
-3. *ckan.api_key*: This is the CKAN API key for an admin user that is able to create and modify datasets
-4. *ckan.user_agent*: This is the HTTP user_agent string to use when querying Geogratis
+```
+ [sqlalchemy]
+ # This is the SQLAlchemy database connection string to the PostgreSQL database
+ sqlalchemy.url = postgresql://dbuser:password@hostname/database
+```
 
 ## Scanning Geogratis
 
 Scanning Geogratis, or other data sources, is a 3 step process
 1. Harvest the data from the source and save it into a records table (geogratis_records)
-2. Compare the harvested data against the datasets in CKAN. Determine if the dataset needs to be either  
-created or updated. The CKAN dataset json is generated and saved to the package_updates table.
+2. Convert the harvested data into the internal format used by CKAN. 
+   The CKAN dataset json is generated and saved to the package_updates table.
 3. Update CKAN based on the updates stored in the package_updates table. 

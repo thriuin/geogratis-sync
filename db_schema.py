@@ -42,6 +42,11 @@ class Packages(g_base):
     ckan_json = Column(UnicodeText, nullable=True)
     message = Column(UnicodeText, nullable=True)
 
+class Settings(g_base):
+    __tablename__ = 'settings'
+    setting_name = Column(UnicodeText,  primary_key=True)
+    setting_value = Column(UnicodeText, nullable=True)
+
 def connect_to_database():
 
     global Db_Session
