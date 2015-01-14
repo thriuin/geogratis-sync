@@ -92,7 +92,8 @@ Use the following SQL script to create the table that holds the results of the G
     );
     
     CREATE TABLE settings (
-        setting_name TEXT PRIMARY KEY,
+        id serial PRIMARY KEY NOT NULL,    
+        setting_name TEXT NOT NULL,
         setting_value TEXT DEFAULT ''
     );
     ```
