@@ -1,7 +1,8 @@
 __author__ = 'Statistics Canada'
 __license__ = 'MIT'
 
-from db_schema import connect_to_database, find_all_records, add_record, Packages, find_record_by_uuid
+from db_schema import connect_to_database, find_all_records, add_record, Packages, find_record_by_uuid, \
+                      Settings, get_setting, save_setting
 from geogratis_dataset_factory import MetadataDatasetModelGeogratisFactory
 import argparse
 from datetime import datetime
@@ -15,11 +16,15 @@ argparser = argparse.ArgumentParser(
 )
 argparser.add_argument('-s', '--since', action='store', default='', dest='since',
                        help='Only update Geogratis records scanned since date (e.g. 2014-01-21)')
+argparser.add_argument('-m', '--monitor', action='store_true', dest='monitoring',
+                       help='Only convert Geogratis records scanned since the last run of the converter')
 
 
 def main():
     args = argparser.parse_args()
     factory = MetadataDatasetModelGeogratisFactory()
+
+    now_str = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
     # Potentially doing a VERY large ORM query. If we don't limit the read, then SQLAlchemy will try to pull
     # everything into memory. Therefore the query must be paged. Paging requires keeping track of the sequential
@@ -28,6 +33,7 @@ def main():
     session = connect_to_database()
     last_id = 0
     scan_date = None
+    setting = get_setting('last_conversion_run')
     if args.since != '':
         try:
             scan_date = datetime.fromtimestamp(time.mktime(time.strptime(args.since, '%Y-%m-%d')))
@@ -39,6 +45,15 @@ def main():
             logging.error(e.message)
             session.close()
             exit()
+    elif args.monitoring:
+        if setting is not None:
+            scan_date = datetime.strptime(setting.setting_value, '%Y-%m-%dT%H:%M:%S.000Z')
+
+    if setting is None:
+            setting = Settings()
+            setting.setting_name = 'last_conversion_run'
+    setting.setting_value = now_str
+    save_setting(setting)
     while True:
         scan_records = find_all_records(session, query_limit=10, limit_id=last_id)
 

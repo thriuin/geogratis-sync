@@ -44,7 +44,8 @@ class Packages(g_base):
 
 class Settings(g_base):
     __tablename__ = 'settings'
-    setting_name = Column(UnicodeText,  primary_key=True)
+    id = Column(Integer, primary_key=True, nullable=False)
+    setting_name = Column(UnicodeText, nullable=False)
     setting_value = Column(UnicodeText, nullable=True)
 
 def connect_to_database():
@@ -95,3 +96,33 @@ def find_all_records(session, query_class=GeogratisRecord, query_limit=1000, lim
     except Exception, e:
         logging.error(e.message)
     return records
+
+
+def get_setting(key_name):
+    session = None
+    setting = None
+    try:
+        session = connect_to_database()
+        rec = session.query(Settings).filter(Settings.setting_name == key_name).one()
+        setting = rec
+    except NoResultFound:
+        setting = Settings()
+        setting.setting_name = key_name
+    except Exception, e:
+        logging.error(e)
+    finally:
+        if session is not None:
+            session.close_all()
+    return setting
+
+
+def save_setting(setting):
+    session = None
+    try:
+        session = connect_to_database()
+        add_record(session, setting)
+    except Exception, e:
+        logging.error(e)
+    finally:
+        if session is not None:
+            session.close_all()

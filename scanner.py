@@ -1,5 +1,4 @@
 __author__ = 'Statistics Canada'
-__copyright__ = 'Crown Copyright'
 __license__ = 'MIT'
 
 import argparse
@@ -7,8 +6,29 @@ import logging
 import requests
 import simplejson as json
 from datetime import datetime
-from db_schema import connect_to_database, GeogratisRecord, add_record, find_record_by_uuid, Settings
+from db_schema import connect_to_database, GeogratisRecord, add_record, find_record_by_uuid, get_setting, save_setting
 from time import sleep
+
+# Set up command line arguments
+
+argparser = argparse.ArgumentParser(
+    description='Scan Geogratis and save record to a database'
+)
+argparser.add_argument('-d', '--since', action='store', default='', dest='since',
+                       help='Scan since date (e.g. 2014-01-21)')
+argparser.add_argument('-l', '--log', action='store', default='', dest='log_filename', help='Log to file')
+argparser.add_argument('-s', '--start_index', action='store', default='', dest='start_index',
+                       help='Start-index')
+argparser.add_argument('-m', '--monitor', action='store_true', default=False, dest='monitor')
+
+args = argparser.parse_args()
+
+if args.log_filename != '':
+    logging.basicConfig(filename=args.log_filename, level=logging.WARNING,
+                        format='%(asctime)s %(levelname)s: %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p')
 
 def _get_link(geo_page, link_rel='next'):
     next_link = ''
@@ -19,36 +39,6 @@ def _get_link(geo_page, link_rel='next'):
             break
     print 'Next link: {0}'.format(next_link)
     return next_link
-
-
-def _get_setting(key_name):
-    session = None
-    setting_value = None
-    try:
-        session = connect_to_database()
-        rec =session.query(Settings).filter(Settings.setting_name == key_name).one()
-        setting_value = rec.setting_value
-    except Exception, e:
-        logging.error(e)
-    finally:
-        if not session is None:
-            session.close_all()
-    return setting_value
-
-
-def _save_setting(key_name, key_value):
-    setting = Settings()
-    setting.setting_name = key_name
-    setting.setting_value = key_value
-    session = None
-    try:
-        session = connect_to_database()
-        add_record(session, setting)
-    except Exception, e:
-        logging.error(e)
-    finally:
-        if not session is None:
-            session.close_all()
 
 
 def get_geogratis_rec(uuid, lang='en', data_format='json'):
@@ -64,13 +54,14 @@ def get_geogratis_rec(uuid, lang='en', data_format='json'):
     return geo_result
 
 
-def read_geogratis(since='', start_index='', monitor=False):
+def main(since='', start_index='', monitor=False):
     geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?alt=json'
     if monitor:
-        monitor_link = _get_setting('monitor_link')
-        if not monitor_link:
-            monitor_link = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min=2015-01-01&alt=json'
-        geog_url = monitor_link
+        monitor_setting = get_setting('monitor_link')
+        if monitor_setting.setting_value is None:
+            geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min=2015-01-01&alt=json'
+        else:
+            geog_url = monitor_setting.setting_value
     elif since != '':
         geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min={0}&alt=json'.format(since)
     elif start_index != '':
@@ -86,7 +77,8 @@ def read_geogratis(since='', start_index='', monitor=False):
             # Save the monitor link for future use
             monitor_link = _get_link(feed_page, 'monitor')
             if monitor_link != '':
-                _save_setting('monitor_link', monitor_link)
+                monitor_setting.setting_value = monitor_link
+                save_setting(monitor_setting)
 
             next_link = _get_link(feed_page)
 
@@ -107,7 +99,8 @@ def read_geogratis(since='', start_index='', monitor=False):
                 feed_page = r.json()            # Save the monitor link for future use
                 monitor_link = _get_link(feed_page, 'monitor')
                 if monitor_link != '':
-                    _save_setting('monitor_link', monitor_link)
+                    monitor_setting.setting_value = monitor_link
+                    save_setting(monitor_setting)
                 next_link = _get_link(feed_page)
                 if 'products' in feed_page:
                     for product in feed_page['products']:
@@ -176,31 +169,14 @@ def save_geogratis_record(session, uuid):
 
         add_record(session, new_rec)
 
-argparser = argparse.ArgumentParser(
-    description='Scan Geogratis and save record to a database'
-)
-argparser.add_argument('-d', '--since', action='store', default='', dest='since',
-                       help='Scan since date (e.g. 2014-01-21)')
-argparser.add_argument('-l', '--log', action='store', default='', dest='log_filename', help='Log to file')
-argparser.add_argument('-s', '--start_index', action='store', default='', dest='start_index',
-                       help='Start-index')
-argparser.add_argument('-m', '--monitor', action='store_true', default=False, dest='monitor')
+# Run the scanner
 
-args = argparser.parse_args()
-
-if args.log_filename != '':
-    logging.basicConfig(filename=args.log_filename, level=logging.WARNING,
-                        format='%(asctime)s %(levelname)s: %(message)s',
-                        datefmt='%m/%d/%Y %I:%M:%S %p')
-    logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
-                        datefmt='%m/%d/%Y %I:%M:%S %p')
-print args.start_index
 if args.monitor:
-    read_geogratis('', '', True)
+    main('', '', True)
 elif args.since != '':
-    read_geogratis(since=args.since)
+    main(since=args.since)
 elif args.start_index != '':
-    read_geogratis(start_index=args.start_index)
+    main(start_index=args.start_index)
 else:
-    read_geogratis()
+    main()
 print 'Scan completed {0}'.format(datetime.now().isoformat())
