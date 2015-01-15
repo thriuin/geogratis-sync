@@ -53,7 +53,7 @@ def main():
             setting = Settings()
             setting.setting_name = 'last_conversion_run'
     setting.setting_value = now_str
-    save_setting(setting)
+
     while True:
         scan_records = find_all_records(session, query_limit=10, limit_id=last_id)
 
@@ -92,6 +92,7 @@ def main():
                 except Exception, e:
                     logging.error(e.message)
                 last_id = scan_record.id
+    save_setting(setting)
     session.close()
 
 

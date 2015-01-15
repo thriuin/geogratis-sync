@@ -2,11 +2,21 @@ __author__ = 'Statistics Canada'
 
 from ConfigParser import ConfigParser
 from datetime import datetime
-from db_schema import connect_to_database, Packages
+from db_schema import connect_to_database, Packages, get_setting
 import argparse
 
+argparser = argparse.ArgumentParser(
+    description='Scan Geogratis and save record to a database'
+)
+argparser.add_argument('-s', '--since', action='store', default='', dest='since',
+                       help='Scan since date (e.g. 2014-01-21)')
+argparser.add_argument('-f', '--file', action='store', default='', dest='dumpfile',
+                       help='File to write dump to')
+argparser.add_argument('-m', '--monitor', action='store_true', default=False, dest='monitor')
+args = argparser.parse_args()
 
-def dump_jsonl(since, dumpfile):
+
+def main(since, dumpfile):
     ini_config = ConfigParser()
     ini_config.read('geogratis.ini')
 
@@ -15,7 +25,16 @@ def dump_jsonl(since, dumpfile):
 
     while True:
 
-        if args.since != '':
+        if args.monitor:
+            last_run_setting = get_setting('last_conversion_run')
+            if last_run_setting.setting_value:
+                package_stream = session.query(Packages).filter(Packages.id > last_id).\
+                    filter(Packages.updated > last_run_setting.setting_value).\
+                    order_by(Packages.id).limit(10).all()
+            else:
+                package_stream = session.query(Packages).filter(Packages.id > last_id).\
+                    order_by(Packages.id).limit(10).all()
+        elif args.since != '':
             package_stream = session.query(Packages).filter(Packages.id > last_id).\
                 filter(Packages.updated > args.since).\
                 order_by(Packages.id).limit(10).all()
@@ -38,16 +57,8 @@ def dump_jsonl(since, dumpfile):
 
     session.close()
 
-argparser = argparse.ArgumentParser(
-    description='Scan Geogratis and save record to a database'
-)
-argparser.add_argument('-s', '--since', action='store', default='', dest='since',
-                       help='Scan since date (e.g. 2014-01-21)')
-argparser.add_argument('-f', '--file', action='store', default='', dest='dumpfile',
-                       help='File to write dump to')
-args = argparser.parse_args()
 dumpfile = args.dumpfile
 if dumpfile == '':
     dumpfile = 'geodump_{0}.jsonl'.format(datetime.now().strftime('%Y-%m-%d-%H%M%S'))
-dump_jsonl(since=args.since, dumpfile=dumpfile)
+main(since=args.since, dumpfile=dumpfile)
 
