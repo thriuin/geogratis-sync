@@ -56,7 +56,7 @@ def get_geogratis_rec(uuid, lang='en', data_format='json'):
 
 def main(since='', start_index='', monitor=False):
     geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?alt=json'
-    monitor_setting = monitor_setting = get_setting('monitor_link')
+    monitor_setting = get_setting('monitor_link')
     if monitor:
         if monitor_setting.setting_value is None:
             geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min=2015-01-01&alt=json'
@@ -78,7 +78,6 @@ def main(since='', start_index='', monitor=False):
             monitor_link = _get_link(feed_page, 'monitor')
             if monitor_link != '':
                 monitor_setting.setting_value = monitor_link
-                save_setting(monitor_setting)
 
             next_link = _get_link(feed_page)
 
@@ -100,7 +99,6 @@ def main(since='', start_index='', monitor=False):
                 monitor_link = _get_link(feed_page, 'monitor')
                 if monitor_link != '':
                     monitor_setting.setting_value = monitor_link
-                    save_setting(monitor_setting)
                 next_link = _get_link(feed_page)
                 if 'products' in feed_page:
                     for product in feed_page['products']:
@@ -111,6 +109,7 @@ def main(since='', start_index='', monitor=False):
                         except Exception, e:
                             logging.error('{0} failed to load'.format(product['id']))
                             logging.error(e)
+            save_setting(monitor_setting)
 
     except Exception, e:
         logging.error(e)
