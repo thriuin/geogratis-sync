@@ -109,7 +109,7 @@ def main(since='', start_index='', monitor=False):
                         except Exception, e:
                             logging.error('{0} failed to load'.format(product['id']))
                             logging.error(e)
-            save_setting(monitor_setting)
+                save_setting(monitor_setting)
 
     except Exception, e:
         logging.error(e)
