@@ -78,7 +78,8 @@ def main(since='', start_index='', monitor=False):
             monitor_link = _get_link(feed_page, 'monitor')
             if monitor_link != '':
                 monitor_setting.setting_value = monitor_link
-
+                save_setting(monitor_setting)
+                print "Next Monitor Link: {0}".format(monitor_setting.setting_value)
             next_link = _get_link(feed_page)
 
             print '{0} Records Found'.format(feed_page['count'])
@@ -110,7 +111,7 @@ def main(since='', start_index='', monitor=False):
                             logging.error('{0} failed to load'.format(product['id']))
                             logging.error(e)
                 save_setting(monitor_setting)
-
+                print "Monitor Link for next run: {0}".format(monitor_setting.setting_value)
     except Exception, e:
         logging.error(e)
     finally:
