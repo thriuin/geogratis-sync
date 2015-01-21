@@ -55,18 +55,18 @@ def main():
     setting.setting_value = now_str
 
     while True:
-        scan_records = find_all_records(session, query_limit=10, limit_id=last_id)
+        scan_records = find_all_records(session, query_limit=10, limit_id=last_id, cutoff=scan_date)
 
         if len(scan_records) == 0:
             break
         else:
             for scan_record in scan_records:
-                print 'ID: {0}'.format(scan_record.id)
                 try:
                     if scan_date and scan_record.geogratis_scanned:
-                        if scan_record.geogratis_scanned > scan_date:
+                        if scan_record.geogratis_scanned < scan_date:
                             last_id = scan_record.id
                             continue
+                    print 'ID: {0}'.format(scan_record.id)
                     # In order to avoid multiple updates, only allow for one instance of an update per uuid.
                     # Previous updates are overridden with the latest update
                     pkg_update_record = find_record_by_uuid(session, scan_record.uuid, query_class=Packages)
