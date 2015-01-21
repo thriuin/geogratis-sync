@@ -82,7 +82,7 @@ def find_record_by_uuid(session, uuid, query_class=GeogratisRecord):
     return rec
 
 
-def find_all_records(session, query_class=GeogratisRecord, query_limit=1000, limit_id=None):
+def find_all_records(session, query_class=GeogratisRecord, query_limit=1000, limit_id=None, cutoff=None):
 
     records = None
     try:
@@ -90,9 +90,12 @@ def find_all_records(session, query_class=GeogratisRecord, query_limit=1000, lim
             query_limit = 1000
         if limit_id is None:
             limit_id = 0
-
-        records = session.query(query_class).filter(query_class.id > limit_id).\
-            order_by(query_class.id).limit(query_limit).all()
+        if cutoff == None:
+            records = session.query(query_class).filter(query_class.id > limit_id).\
+                order_by(query_class.id).limit(query_limit).all()
+        else:
+            records = session.query(query_class).filter(query_class.id > limit_id, query_class.geogratis_scanned > cutoff).\
+                order_by(query_class.id).limit(query_limit).all()
     except Exception, e:
         logging.error(e.message)
     return records
