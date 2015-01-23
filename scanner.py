@@ -5,9 +5,13 @@ import argparse
 import logging
 import requests
 import simplejson as json
+from colorama import init, Fore, Back
 from datetime import datetime
 from db_schema import connect_to_database, GeogratisRecord, add_record, find_record_by_uuid, get_setting, save_setting
 from time import sleep
+
+# Init colorama
+init(autoreset=True)
 
 # Set up command line arguments
 
@@ -37,7 +41,6 @@ def _get_link(geo_page, link_rel='next'):
             next_link = link['href']
             logging.warn(next_link)
             break
-    print 'Next link: {0}'.format(next_link)
     return next_link
 
 
@@ -50,7 +53,7 @@ def get_geogratis_rec(uuid, lang='en', data_format='json'):
     else:
         logging.error('HTTP Error: {0}'.format(r.status_code))
         geo_result = None
-    sleep(0.5)
+    sleep(0.3)
     return geo_result
 
 
@@ -66,7 +69,9 @@ def main(since='', start_index='', monitor=False):
         geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min={0}&alt=json'.format(since)
     elif start_index != '':
         geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?start-index={0}&alt=json'.format(start_index)
+    print (Fore.BLUE + 'Scanning: {0}'.format(geog_url))
     r = requests.get(geog_url)
+    logging.info('HTTP Response Status {0}'.format(r.status_code))
     session = None
     try:
         session = connect_to_database()
@@ -77,12 +82,13 @@ def main(since='', start_index='', monitor=False):
             # Save the monitor link for future use
             monitor_link = _get_link(feed_page, 'monitor')
             if monitor_link != '':
+
                 monitor_setting.setting_value = monitor_link
                 save_setting(monitor_setting)
-                print "Next Monitor Link: {0}".format(monitor_setting.setting_value)
+                print Fore.BLUE + "Next Monitor Link: {0}{1}".format(Fore.YELLOW, monitor_setting.setting_value)
             next_link = _get_link(feed_page)
 
-            print '{0} Records Found'.format(feed_page['count'])
+            print (Fore.BLUE + '{0} Records Found'.format(feed_page['count']))
 
             if 'products' in feed_page:
                 for product in feed_page['products']:
@@ -99,6 +105,7 @@ def main(since='', start_index='', monitor=False):
                 feed_page = r.json()            # Save the monitor link for future use
                 monitor_link = _get_link(feed_page, 'monitor')
                 if monitor_link != '':
+                    monitor_setting = get_setting('monitor_link')
                     monitor_setting.setting_value = monitor_link
                 next_link = _get_link(feed_page)
                 if 'products' in feed_page:
@@ -111,7 +118,7 @@ def main(since='', start_index='', monitor=False):
                             logging.error('{0} failed to load'.format(product['id']))
                             logging.error(e)
                 save_setting(monitor_setting)
-                print "Monitor Link for next run: {0}".format(monitor_setting.setting_value)
+                print (Fore.YELLOW + "Monitor Link for next run: {0}".format(monitor_setting.setting_value))
     except Exception, e:
         logging.error(e)
     finally:
