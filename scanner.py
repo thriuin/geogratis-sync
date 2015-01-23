@@ -104,6 +104,7 @@ def main(since='', start_index='', monitor=False):
                 r = requests.get(geog_url)
                 feed_page = r.json()
                 next_link = _get_link(feed_page)
+                print '{0}Next page link: {1}{2}'.format(Fore.YELLOW, Fore.BLUE, next_link)
                 if 'products' in feed_page:
                     for product in feed_page['products']:
 
@@ -114,11 +115,11 @@ def main(since='', start_index='', monitor=False):
                             logging.error('{0} failed to load'.format(product['id']))
                             logging.error(e)
                 save_setting(monitor_setting)
-                print ("{0}Monitor Link for next run: {1}{2}".format(Fore.YELLOW, Fore.BLUE, monitor_setting.setting_value))
+
     except Exception, e:
         logging.error(e)
     finally:
-        if not session is None:
+        if session is not None:
             session.close_all()
 
 
