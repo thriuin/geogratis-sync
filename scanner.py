@@ -5,7 +5,7 @@ import argparse
 import logging
 import requests
 import simplejson as json
-from colorama import init, Fore, Back
+from colorama import init, Fore, Style
 from datetime import datetime
 from db_schema import connect_to_database, GeogratisRecord, add_record, find_record_by_uuid, get_setting, save_setting
 from time import sleep
@@ -58,18 +58,18 @@ def get_geogratis_rec(uuid, lang='en', data_format='json'):
 
 
 def main(since='', start_index='', monitor=False):
-    geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?alt=json'
+    geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?alt=json&max-results=100'
     monitor_setting = get_setting('monitor_link')
     if monitor:
         if monitor_setting.setting_value is None:
-            geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min=2015-01-01&alt=json'
+            geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min=2015-01-01&alt=json&max-results=100'
         else:
             geog_url = monitor_setting.setting_value
     elif since != '':
-        geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min={0}&alt=json'.format(since)
+        geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min={0}&alt=json&max-results=100'.format(since)
     elif start_index != '':
-        geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?start-index={0}&alt=json'.format(start_index)
-    print (Fore.BLUE + 'Scanning: {0}'.format(geog_url))
+        geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?start-index={0}&alt=json&max-results=100'.format(start_index)
+    print ('{0}Scanning: {1}{2}'.format(Fore.GREEN, Fore.BLUE, geog_url))
     r = requests.get(geog_url)
     logging.info('HTTP Response Status {0}'.format(r.status_code))
     session = None
@@ -85,10 +85,10 @@ def main(since='', start_index='', monitor=False):
 
                 monitor_setting.setting_value = monitor_link
                 save_setting(monitor_setting)
-                print Fore.BLUE + "Next Monitor Link: {0}{1}".format(Fore.YELLOW, monitor_setting.setting_value)
+                print  "{0}Next Monitor Link: {1}{2}".format(Fore.YELLOW, Fore.BLUE, monitor_setting.setting_value)
             next_link = _get_link(feed_page)
 
-            print (Fore.BLUE + '{0} Records Found'.format(feed_page['count']))
+            print ('{0}{1} Records Found'.format(Fore.BLUE, feed_page['count']))
 
             if 'products' in feed_page:
                 for product in feed_page['products']:
@@ -102,11 +102,7 @@ def main(since='', start_index='', monitor=False):
             while next_link != '':
                 geog_url = next_link
                 r = requests.get(geog_url)
-                feed_page = r.json()            # Save the monitor link for future use
-                monitor_link = _get_link(feed_page, 'monitor')
-                if monitor_link != '':
-                    monitor_setting = get_setting('monitor_link')
-                    monitor_setting.setting_value = monitor_link
+                feed_page = r.json()
                 next_link = _get_link(feed_page)
                 if 'products' in feed_page:
                     for product in feed_page['products']:
@@ -118,7 +114,7 @@ def main(since='', start_index='', monitor=False):
                             logging.error('{0} failed to load'.format(product['id']))
                             logging.error(e)
                 save_setting(monitor_setting)
-                print (Fore.YELLOW + "Monitor Link for next run: {0}".format(monitor_setting.setting_value))
+                print ("{0}Monitor Link for next run: {1}{2}".format(Fore.YELLOW, Fore.BLUE, monitor_setting.setting_value))
     except Exception, e:
         logging.error(e)
     finally:
@@ -186,4 +182,4 @@ elif args.start_index != '':
     main(start_index=args.start_index)
 else:
     main()
-print 'Scan completed {0}'.format(datetime.now().isoformat())
+print 'Scan completed {0}{1}'.format(Style.BRIGHT, datetime.now().isoformat())
