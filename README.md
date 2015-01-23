@@ -119,6 +119,7 @@ following values in this .ini.
 ## Scanning Geogratis
 
 Scanning Geogratis, or other data sources, is a 3 step process
+
 1. Harvest the data from the source and save it into a records table (geogratis_records)
 2. Convert the harvested data into the internal format used by CKAN. 
    The CKAN dataset json is generated and saved to the package_updates table.
