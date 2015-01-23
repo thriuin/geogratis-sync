@@ -11,38 +11,43 @@ compared.
 
 ### Dataset Metadata
 
-| CKAN                             | Geogratis                            |
-| ----------------------------------------------------------------------- |
-| url                              | N/A (Calculated field)               |
-| url_fra                          | N/A (Calculated field)               |
-| title                            | title (EN - English record)          |
-| title_fra                        | title (FR - French record)           |
-| notes                            | summary (EN)                         |
-| notes_fra                        | summary (FR)                         |
-| date_modified                    | updatedDate                          |
-| data_series_name                 | citation.series (EN)                 |
-| data_series_name_fra             | citation.series (FR)                 |
-| keywords (list)                  | keywords (EN)                        |
-| keywords_fra (list)              | keywords (FR)                        |
-| spatial                          | geometry (calculated)                |
-| presentation_form                | citation.presentationForm            |
-| digital_object_identifier        | citation.otherCitationDetails        |
-| geographic_region                | categories.urn:iso:place(calculated) |
-| data_series_issue_identification | citation.seriesIndex                 |
-| presentation_form                | citation.prsentationForm             |
-| browse_graphic_url               | browseImages[0]                      |
-| topic_category (list)            | topicCategories (list)               |
-| state                            | deleted                              |
+This table indicates how CKAN dataset metadata fields are mapped to Geogratris metadata fields
+
+ CKAN                             | Geogratis                            
+ -------------------------------- | ------------------------------------ 
+ url                              | N/A (Calculated field)               
+ url_fra                          | N/A (Calculated field)               
+ title                            | title (EN - English record)          
+ title_fra                        | title (FR - French record)           
+ notes                            | summary (EN)                         
+ notes_fra                        | summary (FR)                         
+ date_modified                    | updatedDate                          
+ data_series_name                 | citation.series (EN)                 
+ data_series_name_fra             | citation.series (FR)                 
+ keywords (list)                  | keywords (EN)                        
+ keywords_fra (list)              | keywords (FR)                        
+ spatial                          | geometry (calculated)                
+ presentation_form                | citation.presentationForm            
+ digital_object_identifier        | citation.otherCitationDetails        
+ geographic_region                | categories.urn:iso:place(calculated) 
+ data_series_issue_identification | citation.seriesIndex                 
+ presentation_form                | citation.prsentationForm             
+ browse_graphic_url               | browseImages                 
+ topic_category (list)            | topicCategories (list)               
+ state                            | deleted                              
 
 
 ### Resource Metadata (list)
 
-| CKAN                             | Geogratis                            |
-| ----------------------------------------------------------------------- |
-| name                             | files[].description (EN)             |
-| name_fra                         | files[].description (FR)             |
-| url                              | files[].link                         |
-| format                           | files[].type                         |
+This table indicates how CKAN resource metadata fields are mapped to Geogratris metadata fields
+
+ CKAN                             | Geogratis                           
+ -------------------------------- | ------------------------------------ 
+ name                             | files[].description (EN)            
+ name_fra                         | files[].description (FR)            
+ url                              | files[].link                        
+ format                           | files[].type                        
+
 
 ## Scanning Geogratis
 
