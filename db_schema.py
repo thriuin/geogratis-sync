@@ -124,6 +124,7 @@ def save_setting(setting):
     try:
         session = connect_to_database()
         add_record(session, setting)
+        logging.info('Setting ID: {0}, Value: {1}'.format(setting.setting_name, setting.setting_value))
     except Exception, e:
         logging.error(e)
     finally:
