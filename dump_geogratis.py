@@ -13,6 +13,8 @@ argparser.add_argument('-s', '--since', action='store', default='', dest='since'
 argparser.add_argument('-f', '--file', action='store', default='', dest='dumpfile',
                        help='File to write dump to')
 argparser.add_argument('-m', '--monitor', action='store_true', default=False, dest='monitor')
+argparser.add_argument('-n', '--new-only', action='store_ture', default=False, dest='new_only',
+                       help='Only dump files that do not already have records in the OD portal')
 args = argparser.parse_args()
 
 
@@ -28,19 +30,42 @@ def main(since, dumpfile):
         if args.monitor:
             last_run_setting = get_setting('last_conversion_run')
             if last_run_setting.setting_value:
+                if args.new_only:
+                    package_stream = session.query(Packages).filter(Packages.id > last_id).\
+                        filter(Packages.updated > last_run_setting.setting_value).\
+                        filter(not Packages.existing).\
+                        order_by(Packages.id).limit(10).all()
+                else:
+                    package_stream = session.query(Packages).filter(Packages.id > last_id).\
+                        filter(Packages.updated > last_run_setting.setting_value).\
+                        order_by(Packages.id).limit(10).all()
+            else:
+                if args.new_only:
+                    package_stream = session.query(Packages).filter(Packages.id > last_id). \
+                        filter(not Packages.existing).\
+                        order_by(Packages.id).limit(10).all()
+                else:
+                    package_stream = session.query(Packages).filter(Packages.id > last_id).\
+                        order_by(Packages.id).limit(10).all()
+        elif args.since != '':
+            if args.new_only:
                 package_stream = session.query(Packages).filter(Packages.id > last_id).\
-                    filter(Packages.updated > last_run_setting.setting_value).\
+                    filter(Packages.updated > args.since). \
+                    filter(not Packages.existing).\
+                    order_by(Packages.id).limit(10).all()
+            else:
+                package_stream = session.query(Packages).filter(Packages.id > last_id). \
+                    filter(Packages.updated > args.since). \
+                    filter(not Packages.existing).\
+                    order_by(Packages.id).limit(10).all()
+        else:
+            if args.new_only:
+                package_stream = session.query(Packages).filter(Packages.id > last_id). \
+                    filter(not Packages.existing).\
                     order_by(Packages.id).limit(10).all()
             else:
                 package_stream = session.query(Packages).filter(Packages.id > last_id).\
                     order_by(Packages.id).limit(10).all()
-        elif args.since != '':
-            package_stream = session.query(Packages).filter(Packages.id > last_id).\
-                filter(Packages.updated > args.since).\
-                order_by(Packages.id).limit(10).all()
-        else:
-            package_stream = session.query(Packages).filter(Packages.id > last_id).\
-                order_by(Packages.id).limit(10).all()
         if len(package_stream) == 0:
             break
         else:

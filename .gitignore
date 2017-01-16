@@ -11,3 +11,5 @@ dist
 *.prefs
 geoenv
 deprecated
+*.log
+venv-geo

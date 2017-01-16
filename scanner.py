@@ -59,16 +59,20 @@ def get_geogratis_rec(uuid, lang='en', data_format='json'):
 
 def main(since='', start_index='', monitor=False):
     geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?alt=json&max-results=100'
-    monitor_setting = get_setting('monitor_link')
+    monitor_setting = get_setting(u'monitor_link')
     if monitor:
         if monitor_setting.setting_value is None:
-            geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min=2015-01-01&alt=json&max-results=100'
+            geog_url =\
+                'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min=2001-01-01&alt=json&max-results=100'
         else:
             geog_url = monitor_setting.setting_value
     elif since != '':
-        geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min={0}&alt=json&max-results=100'.format(since)
+        geog_url =\
+            'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst?edited-min={0}&alt=json&max-results=100'.format(since)
     elif start_index != '':
-        geog_url = 'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?start-index={0}&alt=json&max-results=100'.format(start_index)
+        geog_url =\
+            'http://geogratis.gc.ca/api/en/nrcan-rncan/ess-sst/?start-index={0}&alt=json&max-results=100'.\
+            format(start_index)
     print ('{0}Scanning: {1}{2}'.format(Fore.GREEN, Fore.BLUE, geog_url))
     r = requests.get(geog_url)
     logging.info('HTTP Response Status {0}'.format(r.status_code))
@@ -130,19 +134,19 @@ def save_geogratis_record(session, uuid):
     geo_rec_en = get_geogratis_rec(uuid)
     geo_rec_fr = get_geogratis_rec(uuid, 'fr')
     if not geo_rec_en is None:
-        state = 'deleted'
+        state = u'deleted'
         title_fr = ''
         if geo_rec_en['deleted'] == 'false':
-            state = 'active'
+            state = u'active'
         if geo_rec_fr is None:
-            state = 'missing french'
+            state = u'missing french'
         else:
             title_fr = geo_rec_fr['title']
         new_rec = find_record_by_uuid(session, geo_rec_en['id'])
 
-        created_date = '2000-01-01'
-        updated_date = '2000-01-01'
-        edited_date = '2000-01-01'
+        created_date = u'2000-01-01'
+        updated_date = u'2000-01-01'
+        edited_date = u'2000-01-01'
         geogratis_scanned = datetime.now().isoformat()
         if state != 'deleted':
             created_date = geo_rec_en['publishedDate']

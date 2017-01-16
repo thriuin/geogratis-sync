@@ -1,6 +1,8 @@
 __author__ = 'Statistics Canada'
 __license__ = 'MIT'
 
+from ckanapi import RemoteCKAN, NotFound
+from ConfigParser import ConfigParser
 from db_schema import connect_to_database, find_all_records, add_record, Packages, find_record_by_uuid, \
                       Settings, get_setting, save_setting
 from geogratis_dataset_factory import MetadataDatasetModelGeogratisFactory
@@ -21,10 +23,17 @@ argparser.add_argument('-m', '--monitor', action='store_true', dest='monitoring'
 
 
 def main():
+    ini_config = ConfigParser()
+    ini_config.read('geogratis.ini')
+    remote_ckan_url = ini_config.get('ckan', 'ckan.url')
+
     args = argparser.parse_args()
     factory = MetadataDatasetModelGeogratisFactory()
 
     now_str = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+    # Create CKAN API connector to the portal
+    ckan_portal = RemoteCKAN(remote_ckan_url, user_agent='converter/1.0 http://open.canada.ca/data')
 
     # Potentially doing a VERY large ORM query. If we don't limit the read, then SQLAlchemy will try to pull
     # everything into memory. Therefore the query must be paged. Paging requires keeping track of the sequential
@@ -46,7 +55,7 @@ def main():
             session.close()
             exit()
     elif args.monitoring:
-        if setting is not None:
+        if setting.setting_value is not None:
             scan_date = datetime.strptime(setting.setting_value, '%Y-%m-%dT%H:%M:%S.000Z')
 
     if setting is None:
@@ -70,13 +79,24 @@ def main():
                     # In order to avoid multiple updates, only allow for one instance of an update per uuid.
                     # Previous updates are overridden with the latest update
                     pkg_update_record = find_record_by_uuid(session, scan_record.uuid, query_class=Packages)
+
                     if pkg_update_record is None:
                         pkg_update_record = Packages()
+
                     if scan_record.state == 'active':
+
                         # Retrieve the entire Geogratis record in CKAN format and then populate the fields of
                         # the Package Update record for the database.
                         geo_record = factory.create_model_geogratis(scan_record.uuid)
                         pkg_update_record.uuid = scan_record.uuid
+
+                        # Determine if the record is already on the OD portal
+                        try:
+                            ckan_portal.action.package_show(id=scan_record.uuid)
+                            # If the record does not exist, then a NotFound exception will be thrown
+                            pkg_update_record.existing = True
+                        except NotFound, e:
+                            pass
 
                         # Set the dataset for immediate release on the Registry
                         geo_record.portal_release_date = time.strftime("%Y-%m-%d")
@@ -89,6 +109,7 @@ def main():
                             pkg_update_record.created = current_time_str
                         pkg_update_record.updated = current_time_str
                         add_record(session, pkg_update_record)
+
                 except Exception, e:
                     logging.error(e.message)
                 last_id = scan_record.id

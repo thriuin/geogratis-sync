@@ -5,7 +5,7 @@ from ConfigParser import ConfigParser
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy import Column
-from sqlalchemy import UnicodeText, Date, Integer
+from sqlalchemy import UnicodeText, Date, Integer, Boolean
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
@@ -28,7 +28,6 @@ class GeogratisRecord(g_base):
     od_status = Column(UnicodeText)
     geogratis_scanned = Column(Date, nullable=True)
 
-
     def __repr__(self):
         return "<GeogratisRecord(id='%s'), title_en='%s', edited='%s'>" % (
             self.id, self.title_en, self.edited)
@@ -41,6 +40,7 @@ class Packages(g_base):
     updated = Column(Date, nullable=True)
     ckan_json = Column(UnicodeText, nullable=True)
     message = Column(UnicodeText, nullable=True)
+    existing = Column(Boolean, nullable=False, default=False)
 
 class Settings(g_base):
     __tablename__ = 'settings'
