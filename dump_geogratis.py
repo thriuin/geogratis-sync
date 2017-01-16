@@ -13,7 +13,7 @@ argparser.add_argument('-s', '--since', action='store', default='', dest='since'
 argparser.add_argument('-f', '--file', action='store', default='', dest='dumpfile',
                        help='File to write dump to')
 argparser.add_argument('-m', '--monitor', action='store_true', default=False, dest='monitor')
-argparser.add_argument('-n', '--new-only', action='store_ture', default=False, dest='new_only',
+argparser.add_argument('-n', '--new-only', action='store_true', default=False, dest='new_only',
                        help='Only dump files that do not already have records in the OD portal')
 args = argparser.parse_args()
 
@@ -26,7 +26,7 @@ def main(since, dumpfile):
     last_id = 0
 
     while True:
-
+        # @todo clean - up the messy if statement here
         if args.monitor:
             last_run_setting = get_setting('last_conversion_run')
             if last_run_setting.setting_value:
@@ -42,7 +42,7 @@ def main(since, dumpfile):
             else:
                 if args.new_only:
                     package_stream = session.query(Packages).filter(Packages.id > last_id). \
-                        filter(not Packages.existing).\
+                        filter(Packages.existing == False).\
                         order_by(Packages.id).limit(10).all()
                 else:
                     package_stream = session.query(Packages).filter(Packages.id > last_id).\
@@ -56,12 +56,12 @@ def main(since, dumpfile):
             else:
                 package_stream = session.query(Packages).filter(Packages.id > last_id). \
                     filter(Packages.updated > args.since). \
-                    filter(not Packages.existing).\
+                    filter(Packages.existing == False).\
                     order_by(Packages.id).limit(10).all()
         else:
             if args.new_only:
                 package_stream = session.query(Packages).filter(Packages.id > last_id). \
-                    filter(not Packages.existing).\
+                    filter(Packages.existing == False).\
                     order_by(Packages.id).limit(10).all()
             else:
                 package_stream = session.query(Packages).filter(Packages.id > last_id).\
