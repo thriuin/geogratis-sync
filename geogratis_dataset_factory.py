@@ -229,6 +229,7 @@ class MetadataDatasetModelGeogratisFactory():
             if 'citation' in geo_obj_fr:
                 ds.data_series_name_fra = geo_obj_fr['citation']['series']
 
+            ds.author_email = 'NRCan.geogratis-geogratis.RNCan@canada.ca'
             # Keywords are extracted from two sources in the Geogratis record: the gc:subject category
             # and the keywords list
             fr_keywords = []
