@@ -70,6 +70,8 @@ def main():
             break
         else:
             for scan_record in scan_records:
+                # ensure the Geogratis UUID is lowercase
+                scan_record.uuid = scan_record.uuid.lower()
                 try:
                     if scan_date and scan_record.geogratis_scanned:
                         if scan_record.geogratis_scanned < scan_date:

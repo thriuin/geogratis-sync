@@ -284,6 +284,7 @@ class MetadataDatasetModelGeogratisFactory():
         keyword = keyword.replace("(", "- ").replace(")", "") # change "one (two)" to "one - two"
         keyword = keyword.replace("[", "- ").replace("]", "") # change "one [two]" to "one - two"
         keyword = keyword.replace("+", "")                    # Get rid of plus signs
+        keyword = keyword.replace("  ", " ")                  # Get rid of double spaces
         keyword = keyword.lower().strip()
         return keyword
 
