@@ -32,7 +32,7 @@ def main():
                 for r in ckan_records['results']:
                     rp = session.query(GeogratisRecord).filter(GeogratisRecord.uuid == r['name']).all()
                     if not rp:
-                        print r
+                        print r['name']
             last_id += 100
     except Exception, e:
         print >> stderr, e.message
