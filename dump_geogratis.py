@@ -3,7 +3,9 @@ __author__ = 'Statistics Canada'
 from ConfigParser import ConfigParser
 from datetime import datetime
 from db_schema import connect_to_database, Packages, get_setting
+from sys import stderr
 import argparse
+
 
 argparser = argparse.ArgumentParser(
     description='Scan Geogratis and save record to a database'
@@ -15,6 +17,9 @@ argparser.add_argument('-f', '--file', action='store', default='', dest='dumpfil
 argparser.add_argument('-m', '--monitor', action='store_true', default=False, dest='monitor')
 argparser.add_argument('-n', '--new-only', action='store_true', default=False, dest='new_only',
                        help='Only dump files that do not already have records in the OD portal')
+argparser.add_argument('-u', '--update-only', action='store_true', default=False, dest='update_only',
+                       help='Only dump files that do already have records in the OD portal. Cannot be used with the \
+new-only option')
 args = argparser.parse_args()
 
 
@@ -35,6 +40,11 @@ def main(since, dumpfile):
                         filter(Packages.updated > last_run_setting.setting_value).\
                         filter(not Packages.existing).\
                         order_by(Packages.id).limit(10).all()
+                elif args.update_only:
+                    package_stream = session.query(Packages).filter(Packages.id > last_id).\
+                        filter(Packages.updated > last_run_setting.setting_value).\
+                        filter(Packages.existing).\
+                        order_by(Packages.id).limit(10).all()
                 else:
                     package_stream = session.query(Packages).filter(Packages.id > last_id).\
                         filter(Packages.updated > last_run_setting.setting_value).\
@@ -42,7 +52,11 @@ def main(since, dumpfile):
             else:
                 if args.new_only:
                     package_stream = session.query(Packages).filter(Packages.id > last_id). \
-                        filter(Packages.existing == False).\
+                        filter(not Packages.existing).\
+                        order_by(Packages.id).limit(10).all()
+                elif args.update_only:
+                    package_stream = session.query(Packages).filter(Packages.id > last_id). \
+                        filter(Packages.existing).\
                         order_by(Packages.id).limit(10).all()
                 else:
                     package_stream = session.query(Packages).filter(Packages.id > last_id).\
@@ -53,15 +67,24 @@ def main(since, dumpfile):
                     filter(Packages.updated > args.since). \
                     filter(not Packages.existing).\
                     order_by(Packages.id).limit(10).all()
+            elif args.update_only:
+                package_stream = session.query(Packages).filter(Packages.id > last_id).\
+                    filter(Packages.updated > args.since). \
+                    filter(Packages.existing).\
+                    order_by(Packages.id).limit(10).all()
             else:
                 package_stream = session.query(Packages).filter(Packages.id > last_id). \
                     filter(Packages.updated > args.since). \
-                    filter(Packages.existing == False).\
+                    filter(not Packages.existing).\
                     order_by(Packages.id).limit(10).all()
         else:
             if args.new_only:
                 package_stream = session.query(Packages).filter(Packages.id > last_id). \
-                    filter(Packages.existing == False).\
+                    filter(not Packages.existing).\
+                    order_by(Packages.id).limit(10).all()
+            elif args.update_only:
+                package_stream = session.query(Packages).filter(Packages.id > last_id). \
+                    filter(Packages.existing).\
                     order_by(Packages.id).limit(10).all()
             else:
                 package_stream = session.query(Packages).filter(Packages.id > last_id).\
@@ -85,5 +108,7 @@ def main(since, dumpfile):
 dumpfile = args.dumpfile
 if dumpfile == '':
     dumpfile = 'geodump_{0}.jsonl'.format(datetime.now().strftime('%Y-%m-%d-%H%M%S'))
+if args.new_only and args.update_only:
+    print >> stderr, 'Cannot use --new-only and --update-only option at the same time'
 main(since=args.since, dumpfile=dumpfile)
 
